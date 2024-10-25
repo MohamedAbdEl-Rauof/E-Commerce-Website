@@ -10,13 +10,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "POST") {
     try {
       // Extract user data from the request body
-      const { name, username, email, password } = req.body;
+      const { name, username, email, phone, password } = req.body;
 
       // Create a new user object
       const newUser = {
         name,
         username,
         email,
+        phone,
         password, 
       };
 
