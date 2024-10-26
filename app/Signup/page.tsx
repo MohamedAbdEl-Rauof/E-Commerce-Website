@@ -1,8 +1,18 @@
 "use client";
 import { TextField, Checkbox, FormControlLabel, Typography, NoSsr } from "@mui/material";
 import Link from "next/link";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import Swal from "sweetalert2";
+
+type UserData = {
+  name: string;
+  username: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  agreed: boolean;
+};
 
 const SignUp = () => {
   const { control, handleSubmit, reset } = useForm({
@@ -17,7 +27,7 @@ const SignUp = () => {
     },
   });
 
-  const onSubmit = async (data) => {
+  const onSubmit:SubmitHandler<UserData> = async (data) => {
     try {
       const response = await fetch("/api/users", {
         method: "POST",
