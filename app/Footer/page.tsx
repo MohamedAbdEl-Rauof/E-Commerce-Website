@@ -1,60 +1,54 @@
-import React from 'react';
+import React from "react";
 import { Footer } from "flowbite-react";
 import { BsFacebook, BsInstagram, BsGithub } from "react-icons/bs";
 
 const Foter = () => {
-    return (
-        <Footer container>
-            <div className="w-full pt-20 pb-16 bg-black">
-                <div className="grid w-full justify-between sm:flex sm:justify-between md:flex md:grid-cols-1">
-                    <div className="flex">
-                        <h1 className="">3𝓵𝓮𝓰𝓪𝓷𝓽</h1>
-                        <div className="hidden sm:block mx-4 border-l border-gray-300 h-6"></div>
-                        <p>Gift & Decoration Store</p>
-                    </div>
+  return (
+    <Footer container>
+      <div className="w-full pt-20 pb-16 bg-black text-white px-6 sm:px-16 md:px-24">
+        <div className="flex flex-col sm:flex-row w-full sm:justify-between md:grid-cols-1 space-y-8 sm:space-y-0">
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-x-4 text-white">
+            <h1 className="text-3xl">3𝓵𝓮𝓰𝓪𝓷𝓽</h1>
 
-                    {/* Vertical line separator */}
+            <div className="hidden sm:block border-l-2 border-gray-300 h-6"></div>
+            <p>Gift & Decoration Store</p>
+          </div>
 
-                    <div className="flex flex-wrap gap-8 sm:gap-6">
-                        <div>
-                            <Footer.Title title="Home" />
-                        </div>
-                        <div>
-                            <Footer.Title title="Shop" />
-                        </div>
-                        <div>
-                            <Footer.Title title="Product" />
-                        </div>
-                        <div>
-                            <Footer.Title title="Blog" />
-                        </div>
-                        <div>
-                            <Footer.Title title="Contact Us" />
-                        </div>
-                    </div>
-                </div>
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-white text-center sm:text-left">
+            <Footer.Title title="Home" className="text-white" />
+            <Footer.Title title="Shop" className="text-white" />
+            <Footer.Title title="Product" className="text-white" />
+            <Footer.Title title="Blog" className="text-white" />
+            <Footer.Title title="Contact Us" className="text-white" />
+          </div>
+        </div>
 
-                {/* Horizontal line */}
-                <hr className="my-4 border-gray-300 mt-16" />
+        <hr className="my-4 border-gray-300 mt-16" />
 
-                <div className="w-full sm:flex sm:items-center sm:justify-between">
-                    <h1>Copyright © 2023 3legant. All rights reserved</h1>
-
-                    {/* Links for Privacy Policy and Terms of Use */}
-                    <div className="flex space-x-4">
-                        <a href="#" className="text-gray-600 hover:text-gray-800">Privacy Policy</a>
-                        <a href="#" className="text-gray-600 hover:text-gray-800">Terms of Use</a>
-                    </div>
-
-                    <div className="mt-4 flex space-x-6 sm:mt-0 sm:justify-center">
-                        <Footer.Icon href="#" icon={BsFacebook} />
-                        <Footer.Icon href="#" icon={BsInstagram} />
-                        <Footer.Icon href="#" icon={BsGithub} />
-                    </div>
-                </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-white space-y-4 sm:space-y-0">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h1 className="sm:text-base md:text-base ">
+              Copyright © 2023 3legant. All rights reserved
+            </h1>
+            <div className="flex space-x-5">
+              <a href="#" className="text-white font-extrabold">
+                Privacy Policy
+              </a>
+              <a href="#" className="text-white font-extrabold">
+                Terms of Use
+              </a>
             </div>
-        </Footer>
-    );
-}
+          </div>
+
+          <div className="flex space-x-6 sm:justify-center text-white text-2xl">
+            <Footer.Icon href="#" icon={BsFacebook} />
+            <Footer.Icon href="#" icon={BsInstagram} />
+            <Footer.Icon href="#" icon={BsGithub} />
+          </div>
+        </div>
+      </div>
+    </Footer>
+  );
+};
 
 export default Foter;
