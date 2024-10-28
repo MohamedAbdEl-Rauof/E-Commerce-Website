@@ -105,7 +105,7 @@ const Header = () => {
                         <li
                             key={item}
                             onClick={() => handleItemClick(item)}
-                            className={`cursor-pointer transition-colors duration-200 hover:text-black
+                            className={`cursor-pointer transition-colors duration-200 hover:text-black md:text-base
                                 ${activeItem === item ? 'text-black font-medium' : ''}`}
                         >
                             {item}

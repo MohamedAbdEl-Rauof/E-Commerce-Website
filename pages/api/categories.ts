@@ -1,6 +1,4 @@
-// pages/api/categories.js
-import clientPromise from "../../lib/mongodb"; // Adjust path as necessary
-import Category from "../../models/Category"; // Adjust path as necessary
+import clientPromise from "../../lib/mongodb"; 
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -13,12 +11,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       const { name, image } = req.body;
 
       // Create a new category object
-      const newCategory = new Category({ name, image });
-      await newCategory.save(); // Save to the database
+      const newCategory = { name, image };
+      const result = await db.collection("categories").insertOne(newCategory); // Save to the database
 
       res
         .status(201)
-        .json({ message: "Category created", category: newCategory });
+        .json({
+          message: "Category created",
+          category: { id: result.insertedId, ...newCategory },
+        });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Error creating category" });
@@ -27,7 +28,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   // Handle GET request to fetch all categories
   else if (req.method === "GET") {
     try {
-      const categories = await Category.find(); // Fetch all categories
+      const categories = await db.collection("categories").find().toArray(); // Fetch all categories
       res.status(200).json(categories);
     } catch (error) {
       console.error(error);
