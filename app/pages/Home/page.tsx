@@ -5,20 +5,21 @@ import { error } from "console";
 import { FaArrowRight } from "react-icons/fa6";
 
 interface Image {
-  url:string,
-  alt?:string,
+  url: string;
+  alt?: string;
 }
 
 interface Category {
-  id:string,
-  image:string,
-  name:string,
+  id: string;
+  image: string;
+  name: string;
 }
 
 const Home = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [product, setProduct] = useState([]);
 
   // Fetch images from the API
   useEffect(() => {
@@ -76,9 +77,29 @@ const Home = () => {
     fetchCategories();
   }, []);
 
+  // fetch product from api
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch("/api/products");
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(data[1].name);
+        setProduct(data);
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      }
+    };
+    fetchProduct();
+  }, []);
+
   return (
     <div className="w-[90%] mx-auto">
       <Header />
+
+      {/* Slider Section */}
       <div className="mt-10 w-[90%] mx-auto">
         <div
           className="flex items-center justify-centeroverflow-hidden relative"
@@ -98,7 +119,6 @@ const Home = () => {
             />
           )}
 
-          {/* Left Arrow */}
           <button
             onClick={prevImage}
             className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white text-black rounded-full p-2 "
@@ -106,7 +126,7 @@ const Home = () => {
           >
             &#10094;
           </button>
-          {/* Right Arrow */}
+
           <button
             onClick={nextImage}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white text-black rounded-full p-2"
@@ -116,6 +136,8 @@ const Home = () => {
           </button>
         </div>
       </div>
+
+      {/* Text Section */}
       <div className="mt-14 w-[90%] mx-auto flex md:flex-row justify-between">
         <div className="md:w-1/2">
           <h1 className="font-bold text-5xl">Simply Unique</h1>
@@ -129,7 +151,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Dynamic Banner Grid */}
+      {/* Banner Grid Section */}
       <div
         className={`mt-14 mb-10 grid gap-4 w-[90%] mx-auto ${
           categories.length <= 3
@@ -159,6 +181,28 @@ const Home = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* New Arrivals Section */}
+      <div className="mt-14 w-[90%] mx-auto">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold">New</h1>
+            <h1 className="text-4xl font-bold">Arrivals</h1>
+          </div>
+          <div>
+            <u className="flex items-center text-black font-bold cursor-pointer hover:underline">
+              More Products
+              <FaArrowRight className="ml-1 transform transition-transform duration-300 hover:translate-x-1" />
+            </u>
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="text-gray-600 text-lg">
+            Discover the latest trends and products that have just arrived. Shop
+            now and be the first to get your hands on them!
+          </p>
+        </div>
       </div>
     </div>
   );
