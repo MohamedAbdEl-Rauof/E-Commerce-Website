@@ -2,8 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../Header/page";
 import { FaHeart, FaRegHeart, FaArrowRight } from "react-icons/fa";
-import Box from "@mui/material/Box";
-import Rating from "@mui/material/Rating";
+import { Double } from "mongodb";
 
 interface Image {
   url: string;
@@ -16,11 +15,19 @@ interface Category {
   name: string;
 }
 
+interface Product {
+  _id:string,
+  image: string;
+  name: string;
+  price: string;
+  PriceBeforeDiscount: string;
+}
+
 const Home = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProduct] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [favorite, setFavorite] = useState(
     new Array(products.length).fill(false)
   );
@@ -39,7 +46,7 @@ const Home = () => {
     fetchImages();
   }, []);
 
-  // to  change image auto
+  // to  change image automatically
   useEffect(() => {
     if (images.length > 0) {
       const intervalId = setInterval(() => {
@@ -90,7 +97,7 @@ const Home = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        setProduct(data);
+        setProducts(data);
       } catch (error) {
         console.error("Error fetching product:", error);
       }
@@ -205,13 +212,15 @@ const Home = () => {
             <div className="flex gap-6 justify-start items-stretch">
               {/* Products */}
               {products.length > 0 ? (
-                products.map((item, index) => (
-                  <div key={index} className="relative flex-shrink-0 w-64">
+                products.map((item) => (
+                  <div key={item._id} className="relative flex-shrink-0 w-64">
+                    {" "}
+                    {/* Use unique ID here */}
                     <div className="group relative">
                       {/* Product Image */}
                       <img
                         src={item.image}
-                        alt={`Product ${index + 1}`}
+                        alt={item.name} // Use item name for better accessibility
                         className="w-full h-52 object-cover rounded-md shadow-lg transition-transform duration-300 transform group-hover:scale-105"
                       />
 
@@ -220,13 +229,20 @@ const Home = () => {
                         onClick={() =>
                           setFavorite((prev) => {
                             const newFav = [...prev];
-                            newFav[index] = !newFav[index];
+                            const index = products.findIndex(
+                              (product) => product._id === item._id
+                            ); // Find the index based on unique ID
+                            newFav[index] = !newFav[index]; // Toggle favorite state
                             return newFav;
                           })
                         }
                         className="absolute top-4 right-4 text-2xl text-gray-500 cursor-pointer opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                       >
-                        {favorite[index] ? (
+                        {favorite[
+                          products.findIndex(
+                            (product) => product._id === item._id
+                          )
+                        ] ? (
                           <FaHeart className="text-red-500" />
                         ) : (
                           <FaRegHeart />
@@ -248,12 +264,10 @@ const Home = () => {
                         </p>
                       </div>
                     </div>
-
                     {/* Product Name */}
                     <p className="mt-2 text-center font-semibold">
                       {item.name}
                     </p>
-
                     {/* Price and Discount */}
                     <div className="flex justify-center gap-3 mt-2">
                       <p className="font-bold">${item.price}</p>
