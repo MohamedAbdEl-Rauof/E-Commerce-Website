@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../Header/page";
 import { FaHeart, FaRegHeart, FaArrowRight } from "react-icons/fa";
-import { Double } from "mongodb";
+import Box from "@mui/material/Box";
+import Rating from "@mui/material/Rating";
+import Typography from "@mui/material/Typography";
 
 interface Image {
   url: string;
@@ -16,11 +18,12 @@ interface Category {
 }
 
 interface Product {
-  _id:string,
+  _id: string;
   image: string;
   name: string;
   price: string;
   PriceBeforeDiscount: string;
+  createdAt:Date;
 }
 
 const Home = () => {
@@ -88,7 +91,24 @@ const Home = () => {
     fetchCategories();
   }, []);
 
-  // fetch product from api
+  // check if a date is within the last 3 days
+  const isDateWithinLastThreeDays = (dateString : Date) => {
+    // Parse the ISO date string to a Date object
+    const productDate = new Date(dateString);
+
+    // Get current date and set time to midnight for consistent comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Calculate date 3 days ago
+    const threeDaysAgo = new Date(today);
+    threeDaysAgo.setDate(today.getDate() - 3);
+
+    // Return true if the product date is between threeDaysAgo and today (inclusive)
+    return productDate >= threeDaysAgo;
+  };
+
+  // Fetch product from API
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -97,7 +117,12 @@ const Home = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        setProducts(data);
+        // Filter to only show products from the last 3 days
+        const recentProducts = data.filter((product:Product) =>
+          isDateWithinLastThreeDays(product.createdAt)
+        );
+        setProducts(recentProducts);
+        setFavorite(new Array(recentProducts.length).fill(false));
       } catch (error) {
         console.error("Error fetching product:", error);
       }
@@ -210,17 +235,14 @@ const Home = () => {
         <div className="mt-7 mb-36 flex justify-center">
           <div className="relative w-full overflow-x-auto scroll-container">
             <div className="flex gap-6 justify-start items-stretch">
-              {/* Products */}
               {products.length > 0 ? (
                 products.map((item) => (
                   <div key={item._id} className="relative flex-shrink-0 w-64">
-                    {" "}
-                    {/* Use unique ID here */}
                     <div className="group relative">
                       {/* Product Image */}
                       <img
                         src={item.image}
-                        alt={item.name} // Use item name for better accessibility
+                        alt={item.name}
                         className="w-full h-52 object-cover rounded-md shadow-lg transition-transform duration-300 transform group-hover:scale-105"
                       />
 
@@ -231,8 +253,8 @@ const Home = () => {
                             const newFav = [...prev];
                             const index = products.findIndex(
                               (product) => product._id === item._id
-                            ); // Find the index based on unique ID
-                            newFav[index] = !newFav[index]; // Toggle favorite state
+                            );
+                            newFav[index] = !newFav[index];
                             return newFav;
                           })
                         }
@@ -264,16 +286,35 @@ const Home = () => {
                         </p>
                       </div>
                     </div>
-                    {/* Product Name */}
-                    <p className="mt-2 text-center font-semibold">
-                      {item.name}
-                    </p>
-                    {/* Price and Discount */}
-                    <div className="flex justify-center gap-3 mt-2">
-                      <p className="font-bold">${item.price}</p>
-                      <del className="text-gray-500">
-                        {item.PriceBeforeDiscount}
-                      </del>
+
+                    <div className="mt-3 mb-3">
+                      {/* Rating Section */}
+                      <Box sx={{ "& > legend": { mt: 2 } }}>
+                        <Rating
+                          name="no-value"
+                          value={null}
+                          sx={{
+                            "& .MuiRating-iconFilled": {
+                              color: "black", // Color for filled stars
+                            },
+                          }}
+                        />
+                      </Box>
+
+                      {/* Product Name */}
+                      <p className="mt-2 font-semibold text-left">
+                        {item.name}
+                      </p>
+
+                      {/* Price and Discount Section */}
+                      <div className="flex gap-3 mt-2 text-left">
+                        <p className="font-bold">${item.price}</p>
+                        {item.PriceBeforeDiscount && (
+                          <del className="text-gray-500">
+                            ${item.PriceBeforeDiscount}
+                          </del>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
