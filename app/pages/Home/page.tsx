@@ -4,7 +4,13 @@ import Header from "../../Header/page";
 import { FaHeart, FaRegHeart, FaArrowRight } from "react-icons/fa";
 import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
-import Typography from "@mui/material/Typography";
+import { CiDeliveryTruck } from "react-icons/ci";
+import { CiCreditCard2 } from "react-icons/ci";
+import { CiLock } from "react-icons/ci";
+import { CiPhone } from "react-icons/ci";
+import { TextField, Checkbox, FormControlLabel } from "@mui/material";
+import Link from "next/link";
+import Footer from "../../Footer/page";
 
 interface Image {
   url: string;
@@ -23,7 +29,12 @@ interface Product {
   name: string;
   price: string;
   PriceBeforeDiscount: string;
-  createdAt:Date;
+  createdAt: Date;
+}
+
+interface Article {
+  images: string;
+  name: string;
 }
 
 const Home = () => {
@@ -34,6 +45,7 @@ const Home = () => {
   const [favorite, setFavorite] = useState(
     new Array(products.length).fill(false)
   );
+  const [articles, setArticles] = useState<Article[]>([]);
 
   // Fetch images from the API
   useEffect(() => {
@@ -92,7 +104,7 @@ const Home = () => {
   }, []);
 
   // check if a date is within the last 3 days
-  const isDateWithinLastThreeDays = (dateString : Date) => {
+  const isDateWithinLastThreeDays = (dateString: Date) => {
     // Parse the ISO date string to a Date object
     const productDate = new Date(dateString);
 
@@ -118,7 +130,7 @@ const Home = () => {
         }
         const data = await response.json();
         // Filter to only show products from the last 3 days
-        const recentProducts = data.filter((product:Product) =>
+        const recentProducts = data.filter((product: Product) =>
           isDateWithinLastThreeDays(product.createdAt)
         );
         setProducts(recentProducts);
@@ -130,8 +142,26 @@ const Home = () => {
     fetchProduct();
   }, []);
 
+  // fetch Articles from APi
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        const response = await fetch("/api/articles");
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setArticles(data);
+        console.log("Raouf", data[0].images[0]);
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      }
+    };
+    fetchArticle();
+  }, []);
+
   return (
-    <div className="w-[90%] mx-auto">
+    <div className="">
       <Header />
 
       {/* Slider Section */}
@@ -324,6 +354,123 @@ const Home = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Values Section */}
+      <div className="mb-6 w-[90%] mx-auto">
+        <div className="flex flex-wrap gap-5 justify-center">
+          <div className="flex flex-col items-center justify-center bg-[#F3F5F7] w-44 h-44 rounded-full p-4 text-center">
+            <CiDeliveryTruck className="text-5xl text-gray-700 mb-2" />
+            <h1 className="mt-2 font-bold text-lg">Free Shipping</h1>
+            <p className="text-sm text-gray-500">Order above $200</p>
+          </div>
+
+          <div className="flex flex-col items-center justify-center bg-[#F3F5F7] w-44 h-44 rounded-full p-4 text-center">
+            <CiCreditCard2 className="text-5xl text-gray-700 mb-2" />
+            <h1 className="mt-2 font-bold text-lg">Money-back</h1>
+            <p className="text-sm text-gray-500">30 days guarantee</p>
+          </div>
+
+          <div className="flex flex-col items-center justify-center bg-[#F3F5F7] w-44 h-44 rounded-full p-4 text-center">
+            <CiLock className="text-5xl text-gray-700 mb-2" />
+            <h1 className="mt-2 font-bold text-lg">Secure Payments</h1>
+            <p className="text-sm text-gray-500">Secured by Stripe</p>
+          </div>
+
+          <div className="flex flex-col items-center justify-center bg-[#F3F5F7] w-44 h-44 rounded-full p-4 text-center">
+            <CiPhone className="text-5xl text-gray-700 mb-2" />
+            <h1 className="mt-2 font-bold text-lg">24/7 Support</h1>
+            <p className="text-sm text-gray-500">Phone and Email support</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Banner section */}
+      <div className="flex flex-col md:flex-row justify-between mt-20 h-auto md:h-96">
+        {/* Left Image Section */}
+        <div className="bg-slate-200 flex-1 flex justify-center items-center">
+          <img
+            src="/images/Bannar/Paste image.jpg"
+            alt="Sign Up"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Right Content Section */}
+        <div className="flex-1 p-6 md:p-4 flex flex-col justify-center bg-white ml-9">
+          <div className="text-center md:text-left mx-auto md:mx-0 md:w-10/12 lg:w-8/12">
+            <p className="mt-6 text-blue-500 font-bold text-lg md:text-xl">
+              SALE UP TO 35% OFF
+            </p>
+            <div className="mt-4 font-bold text-3xl md:text-4xl lg:text-5xl">
+              <h1>HUNDREDS of</h1>
+              <h1>New lower prices!</h1>
+            </div>
+            <p className="mt-6 text-gray-700 text-sm md:text-base">
+              It’s more affordable than ever to give every room in your home a
+              stylish makeover
+            </p>
+            <u className="mt-7 flex justify-center md:justify-start items-center text-black font-bold cursor-pointer hover:underline">
+              <span>Show More</span>
+              <FaArrowRight className="ml-1 transform transition-transform duration-300 hover:translate-x-1" />
+            </u>
+          </div>
+        </div>
+      </div>
+
+      {/* Blog Section */}
+      <div className="mt-14 w-[90%] mx-auto">
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold">Article</h1>
+          <u className="flex items-center text-black font-bold cursor-pointer hover:underline">
+            More Article
+            <FaArrowRight className="ml-1 transform transition-transform duration-300 hover:translate-x-1" />
+          </u>
+        </div>
+
+        <div className="mt-10 flex flex-wrap gap-5 justify-center md:justify-start">
+          {articles.slice(0, 3).map((article, index) => (
+            <div
+              key={index}
+              className="flex flex-col items-center w-full md:w-[30%]"
+            >
+              <div className="w-full overflow-hidden rounded-lg">
+                <img
+                  src={article.images[0]}
+                  alt={`Article ${index + 1}`}
+                  className="w-full h-52 object-cover rounded-lg transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+              <h1 className="mt-4 text-center font-semibold">{article.name}</h1>
+              <u className="mt-2 flex items-center text-black font-bold cursor-pointer hover:underline">
+                <span>Read More</span>
+                <FaArrowRight className="ml-1 transform transition-transform duration-300 hover:translate-x-1" />
+              </u>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Newsletter */}
+      <div className="mt-24 relative">
+        <img
+          src="/images/Newsletter/Paste image (1).jpg"
+          className="w-full"
+          alt="Join Our Newsletter"
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center  ">
+          <h1 className="text-2xl font-bold">Join Our Newsletter</h1>
+          <p className="mt-6 text-center">
+            <Link href="/Signup" className="font-bold text-yellow-400">
+              <u>Sign up</u>
+            </Link>{" "}
+            for deals, new products, and promotions
+          </p>
+        </div>
+      </div>
+
+      <div className="">
+        <Footer />
       </div>
     </div>
   );
