@@ -8,7 +8,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   // Handle POST request to create a new product
   if (req.method === "POST") {
     try {
-      const { name, description, price, image, categoryId } = req.body;
+      const { name, description, price, image, categoryId,PriceBeforeDiscount } = req.body;
 
       // Create a new product object
       const newProduct = {
@@ -18,6 +18,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         image,
         categoryId,
         createdAt: new Date(),
+        PriceBeforeDiscount
       };
       
       const result = await db.collection("products").insertOne(newProduct); // Save to the database

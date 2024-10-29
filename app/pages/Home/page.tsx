@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Header from "../../Header/page";
-import { error } from "console";
-import { FaArrowRight } from "react-icons/fa6";
+import { FaHeart, FaRegHeart, FaArrowRight } from 'react-icons/fa';
+import Box from '@mui/material/Box';
+import Rating from '@mui/material/Rating';
 
 interface Image {
   url: string;
@@ -19,7 +20,9 @@ const Home = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [product, setProduct] = useState([]);
+  const [products, setProduct] = useState([]);
+  const [favorite, setFavorite] = useState(new Array(products.length).fill(false));
+
 
   // Fetch images from the API
   useEffect(() => {
@@ -86,7 +89,6 @@ const Home = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        console.log(data[1].name);
         setProduct(data);
       } catch (error) {
         console.error("Error fetching product:", error);
@@ -94,6 +96,7 @@ const Home = () => {
     };
     fetchProduct();
   }, []);
+
 
   return (
     <div className="w-[90%] mx-auto">
@@ -153,11 +156,10 @@ const Home = () => {
 
       {/* Banner Grid Section */}
       <div
-        className={`mt-14 mb-10 grid gap-4 w-[90%] mx-auto ${
-          categories.length <= 3
-            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        }`}
+        className={`mt-14 mb-10 grid gap-4 w-[90%] mx-auto ${categories.length <= 3
+          ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+          : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+          }`}
       >
         {categories.map((category) => (
           <div
@@ -197,12 +199,68 @@ const Home = () => {
             </u>
           </div>
         </div>
-        <div className="mt-4">
-          <p className="text-gray-600 text-lg">
-            Discover the latest trends and products that have just arrived. Shop
-            now and be the first to get your hands on them!
-          </p>
+        <div className="mt-7 mb-36 flex flex-wrap gap-6 justify-center">
+          {products.length > 0 ? (
+            products.map((item, index) => (
+              <div key={index} className="relative flex-shrink-0 w-64">
+                <div className="group">
+                  <img
+                    src={item.image}
+                    alt={`Product ${index + 1}`}
+                    className="w-full h-52 object-cover rounded-md shadow-lg transition-transform duration-300 transform group-hover:scale-105"
+                  />
+
+                  {/* Favorite Icon */}
+                  <div
+                    onClick={() => setFavorite((prev) => {
+                      const newFav = [...prev];
+                      newFav[index] = !newFav[index];
+                      return newFav;
+                    })}
+                    className="absolute top-4 right-4 text-2xl text-gray-500 cursor-pointer transition-colors duration-300"
+                  >
+                    {favorite[index] ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
+                  </div>
+
+                  {/* Add to Cart button */}
+                  <button className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Add to Cart
+                  </button>
+
+                  {/* Labels */}
+                  <div className="absolute top-2 left-2">
+                    <p className="text-white bg-red-500 px-2 py-1 rounded-md text-sm font-semibold">New</p>
+                    <p className="text-white bg-green-500 px-2 mt-1 rounded-md text-sm font-semibold">-50%</p>
+                  </div>
+                </div>
+
+                {/* Rating */}
+                <Box sx={{ '& > legend': { mt: 2 } }}>
+                  <Rating name="product-rating" value={item.rating || null} />
+                </Box>
+
+                {/* Product Name */}
+                <p className="mt-2 text-center font-semibold">{item.name}</p>
+
+                <div>
+                  {/* Price and Discount */}
+                  <div className="flex justify-center gap-3">
+                    <p className="font-bold">${item.price}</p>
+                    <del className="text-gray-500">{item.PriceBeforeDiscount}</del>
+                  </div>
+                </div>
+
+
+                {/* Vertical Line */}
+                <div className="w-full h-[2px] bg-gray-200 mt-3"></div>
+              </div>
+            ))
+          ) : (
+            <p>Loading...</p>
+          )}
         </div>
+
+
       </div>
     </div>
   );
