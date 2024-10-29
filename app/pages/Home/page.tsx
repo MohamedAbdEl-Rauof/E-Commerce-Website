@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Header from "../../Header/page";
+import Header from "../../components/Header/page";
 import { FaHeart, FaRegHeart, FaArrowRight } from "react-icons/fa";
 import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
@@ -10,7 +10,8 @@ import { CiLock } from "react-icons/ci";
 import { CiPhone } from "react-icons/ci";
 import { TextField, Checkbox, FormControlLabel } from "@mui/material";
 import Link from "next/link";
-import Footer from "../../Footer/page";
+import Footer from "../../components/Footer/page";
+import Newsletter from "../../components/Newsletter/page";
 
 interface Image {
   url: string;
@@ -162,6 +163,8 @@ const Home = () => {
 
   return (
     <div className="">
+
+      {/* Header Section*/}
       <Header />
 
       {/* Slider Section */}
@@ -218,11 +221,10 @@ const Home = () => {
 
       {/* Banner Grid Section */}
       <div
-        className={`mt-14 mb-10 grid gap-4 w-[90%] mx-auto ${
-          categories.length <= 3
+        className={`mt-14 mb-10 grid gap-4 w-[90%] mx-auto ${categories.length <= 3
             ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
             : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        }`}
+          }`}
       >
         {categories.map((category) => (
           <div
@@ -452,24 +454,10 @@ const Home = () => {
       </div>
 
       {/* Newsletter */}
-      <div className="mt-24 relative">
-        <img
-          src="/images/Newsletter/Paste image (1).jpg"
-          className="w-full"
-          alt="Join Our Newsletter"
-        />
-        <div className="absolute inset-0 flex flex-col items-center justify-center  ">
-          <h1 className="text-2xl font-bold">Join Our Newsletter</h1>
-          <p className="mt-6 text-center">
-            <Link href="/Signup" className="font-bold text-yellow-400">
-              <u>Sign up</u>
-            </Link>{" "}
-            for deals, new products, and promotions
-          </p>
-        </div>
-      </div>
+      <Newsletter />
 
-      <div className="">
+      {/* Footer Section */}
+      <div className="w-full">
         <Footer />
       </div>
     </div>

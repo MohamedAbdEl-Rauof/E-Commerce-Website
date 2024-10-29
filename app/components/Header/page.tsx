@@ -24,10 +24,10 @@ type NavItem = typeof NAV_ITEMS[number];
 
 // Route mapping
 const ROUTES: Record<NavItem, string> = {
-    Home: '/',
-    Shop: '/shop',
-    Product: '/product',
-    'Contact Us': '/contact',
+    Home: '/pages/Home',
+    Shop: '/pages/Shop',
+    Product: '/pages/Product',
+    'Contact Us': '/pages/ContactUs',
 };
 
 const Header = () => {
