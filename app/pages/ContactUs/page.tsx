@@ -30,7 +30,7 @@ const ContactUs = () => {
         {/* Intro Section */}
         <div className="mt-10 md:mt-14">
           <div className="md:w-[70%] space-y-6 md:space-y-9">
-            <h1 className="font-bold text-3xl sm:text-5xl md:text-7xl">
+            <h1 className="font-bold text-xl sm:text-5xl md:text-2xl lg:text-4xl">
               We believe in sustainable decor. We’re passionate about life at
               home.
             </h1>
