@@ -1,6 +1,6 @@
 import clientPromise from "../../lib/mongodb";
 import { NextApiRequest, NextApiResponse } from "next";
-import { ObjectId } from "mongodb"; // Import ObjectId for MongoDB
+import { ObjectId } from "mongodb";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const client = await clientPromise;
@@ -9,19 +9,31 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   // Handle GET request to fetch products
   if (req.method === "GET") {
     try {
-      const { categoryId } = req.query;
+      const { categoryId, priceRange } = req.query;
 
-      // If categoryId is provided, fetch products by category
-      let products;
+      // Construct the filter query
+      const filter: any = {};
+
+      // If categoryId is provided, add to filter
       if (categoryId && typeof categoryId === 'string') {
-        products = await db
-          .collection("products")
-          .find({ categoryId: new ObjectId(categoryId) }) // Ensure categoryId is queried as ObjectId
-          .toArray();
-      } else {
-        // Otherwise, fetch all products
-        products = await db.collection("products").find().toArray();
+        filter.categoryId = new ObjectId(categoryId);
       }
+
+      // If priceRange is provided, parse and add to filter
+      if (priceRange && typeof priceRange === 'string' && priceRange !== "all") {
+        const [min, max] = priceRange.split("-");
+
+        // Add the price filter based on the range
+        if (max) {
+          filter.price = { $gte: parseFloat(min), $lte: parseFloat(max) };
+        } else {
+          // This case is for the "$400+" range
+          filter.price = { $gte: parseFloat(min) };
+        }
+      }
+
+      // Fetch products based on the constructed filter
+      const products = await db.collection("products").find(filter).toArray();
 
       res.status(200).json(products);
     } catch (error) {

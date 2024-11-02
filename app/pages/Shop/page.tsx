@@ -27,6 +27,7 @@ const Shop = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all"); // Default to "All Rooms"
     const [products, setProducts] = useState<Product[]>([]);
+    const [selectedPriceRange, setSelectedPriceRange] = useState<string>("all");
     const [loading, setLoading] = useState(false);
     const [favorite, setFavorite] = useState(
         new Array(products.length).fill(false)
@@ -108,6 +109,8 @@ const Shop = () => {
     const handleCategoryClick = async (categoryId: string) => {
         setSelectedCategoryId(categoryId);
         setLoading(true);
+        fetchFilteredProducts(categoryId, selectedPriceRange);
+
         try {
             if (categoryId === "all") {
                 const response = await fetch('/api/products');
@@ -125,6 +128,37 @@ const Shop = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchFilteredProducts = async (categoryId: string, priceRange: string) => {
+        setLoading(true);
+        try {
+            let url = '/api/products?';
+
+            // Add category filter if not "all"
+            if (categoryId !== "all") {
+                url += `categoryId=${categoryId}&`;
+            }
+
+            // Add price filter if not "all"
+            if (priceRange !== "all") {
+                url += `priceRange=${priceRange}`;
+            }
+
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+            setProducts(data);
+        } catch (error) {
+            console.error("Error fetching filtered products:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePriceRangeChange = async (range: string) => {
+        setSelectedPriceRange(range);
+        fetchFilteredProducts(selectedCategoryId, range);
     };
 
 
@@ -193,11 +227,22 @@ const Shop = () => {
                                 { label: "$100.00 - $199.99", range: "100-199.99" },
                                 { label: "$200.00 - $299.99", range: "200-299.99" },
                                 { label: "$300.00 - $399.99", range: "300-399.99" },
-                                { label: "$400.00+", range: "400+" },
+                                { label: "$400.00+", range: "400" },
                             ].map((price, index) => (
                                 <div key={index} className="flex items-center mb-2">
-                                    <input type="checkbox" id={price.range} name="price" className="mr-2" />
-                                    <label htmlFor={price.range} className="text-gray-700">
+                                    <input
+                                        type="radio"
+                                        id={price.range}
+                                        name="price"
+                                        className="mr-2"
+                                        checked={selectedPriceRange === price.range}
+                                        onChange={() => handlePriceRangeChange(price.range)}
+                                    />
+                                    <label
+                                        htmlFor={price.range}
+                                        className={`text-gray-700 cursor-pointer ${selectedPriceRange === price.range ? 'font-bold' : ''
+                                            }`}
+                                    >
                                         {price.label}
                                     </label>
                                 </div>
