@@ -5,6 +5,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { IoFilter } from "react-icons/io5";
 import { FaTh, FaThLarge, FaPause, FaEquals } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaArrowRight } from "react-icons/fa";
+import Box from "@mui/material/Box";
+import Rating from "@mui/material/Rating";
 
 interface Category {
     _id: string;
@@ -25,6 +28,9 @@ const Shop = () => {
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
+    const [favorite, setFavorite] = useState(
+        new Array(products.length).fill(false)
+    );
 
     // Fetch categories from API
     useEffect(() => {
@@ -41,6 +47,28 @@ const Shop = () => {
             }
         };
         fetchCategories();
+    }, []);
+
+    // Fetch all products initially
+    useEffect(() => {
+        const fetchAllProducts = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                setAllProducts(data);
+                setProducts(data); // Initially show all products
+                setFavorite(new Array(data.length).fill(false)); // Initialize favorites array
+            } catch (error) {
+                console.error("Error fetching all products:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAllProducts();
     }, []);
 
     // Fetch products when category is selected
@@ -182,31 +210,81 @@ const Shop = () => {
                             <div className="text-center py-10">Loading products...</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {products.map((product) => (
-                                    <div key={product._id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
-                                        <div className="relative h-48">
+                                {products.map((product, index) => (
+                                    <div key={product._id} className="relative flex-shrink-0">
+                                        <div className="group relative">
+                                            {/* Product Image */}
                                             <img
                                                 src={product.image}
                                                 alt={product.name}
-                                                layout="fill"
-                                                objectFit="cover"
-                                                className="rounded-lg"
+                                                className="w-full h-52 object-cover rounded-md shadow-lg transition-transform duration-300 transform group-hover:scale-105"
                                             />
+
+                                            {/* Favorite Icon */}
+                                            <div
+                                                onClick={() => {
+                                                    const newFavorites = [...favorite];
+                                                    newFavorites[index] = !newFavorites[index];
+                                                    setFavorite(newFavorites);
+                                                }}
+                                                className="absolute top-4 right-4 text-2xl text-gray-500 cursor-pointer opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                                            >
+                                                {favorite[index] ? (
+                                                    <FaHeart className="text-red-500" />
+                                                ) : (
+                                                    <FaRegHeart />
+                                                )}
+                                            </div>
+
+                                            {/* Add to Cart Button */}
+                                            <button className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 font-semibold">
+                                                Add to Cart
+                                            </button>
+
+                                            {/* Labels */}
+                                            <div className="absolute top-2 left-2">
+                                                <p className="text-black bg-white px-2 py-1 rounded-md text-sm font-semibold">
+                                                    New
+                                                </p>
+                                                <p className="text-white bg-green-500 px-2 mt-1 rounded-md text-sm font-semibold">
+                                                    -50%
+                                                </p>
+                                            </div>
                                         </div>
-                                        <h3 className="mt-4 text-lg font-semibold">{product.name}</h3>
-                                        <div className="mt-2 flex justify-between items-center">
-                                            <span className="text-lg font-bold">${product.price}</span>
-                                            {product.PriceBeforeDiscount && (
-                                                <span className="text-sm text-gray-500 line-through">
-                                                    ${product.PriceBeforeDiscount}
-                                                </span>
-                                            )}
+
+                                        <div className="mt-3 mb-3">
+                                            {/* Rating Section */}
+                                            <Box sx={{ "& > legend": { mt: 2 } }}>
+                                                <Rating
+                                                    name="no-value"
+                                                    value={null}
+                                                    sx={{
+                                                        "& .MuiRating-iconFilled": {
+                                                            color: "black",
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+
+                                            {/* Product Name */}
+                                            <p className="mt-2 font-semibold text-left">
+                                                {product.name}
+                                            </p>
+
+                                            {/* Price and Discount Section */}
+                                            <div className="flex gap-3 mt-2 text-left">
+                                                <p className="font-bold">${product.price}</p>
+                                                {product.PriceBeforeDiscount && (
+                                                    <del className="text-gray-500">
+                                                        ${product.PriceBeforeDiscount}
+                                                    </del>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
-
                         {/* No Products Message */}
                         {!loading && products.length === 0 && selectedCategoryId && (
                             <div className="text-center py-10 text-gray-500">
