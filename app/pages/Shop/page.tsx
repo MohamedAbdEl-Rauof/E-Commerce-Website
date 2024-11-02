@@ -25,7 +25,7 @@ interface Product {
 
 const Shop = () => {
     const [categories, setCategories] = useState<Category[]>([]);
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all"); // Default to "All Rooms"
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
     const [favorite, setFavorite] = useState(
@@ -41,13 +41,14 @@ const Shop = () => {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                setCategories(data);
+                setCategories([{ _id: "all", name: "All Rooms" }, ...data]); // Add "All Rooms" as a default option
             } catch (error) {
                 console.error("Error fetching categories:", error);
             }
         };
         fetchCategories();
     }, []);
+
 
     // Fetch all products initially
     useEffect(() => {
@@ -59,7 +60,6 @@ const Shop = () => {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                setAllProducts(data);
                 setProducts(data); // Initially show all products
                 setFavorite(new Array(data.length).fill(false)); // Initialize favorites array
             } catch (error) {
@@ -70,6 +70,7 @@ const Shop = () => {
         };
         fetchAllProducts();
     }, []);
+
 
     // Fetch products when category is selected
     useEffect(() => {
@@ -82,7 +83,6 @@ const Shop = () => {
                 const response = await fetch(`/api/products?categoryId=${selectedCategoryId}`);
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
                 setProducts(data);
@@ -105,10 +105,28 @@ const Shop = () => {
         { icon: FaEquals, label: "List View" }
     ];
 
-    // Handle category click
-    const handleCategoryClick = (categoryId: string) => {
+    const handleCategoryClick = async (categoryId: string) => {
         setSelectedCategoryId(categoryId);
+        setLoading(true);
+        try {
+            if (categoryId === "all") {
+                const response = await fetch('/api/products');
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                setProducts(data);
+            } else {
+                const response = await fetch(`/api/products?categoryId=${categoryId}`);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                setProducts(data);
+            }
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        } finally {
+            setLoading(false);
+        }
     };
+
 
     return (
         <div>
