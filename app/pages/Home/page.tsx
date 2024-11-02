@@ -8,8 +8,6 @@ import { CiDeliveryTruck } from "react-icons/ci";
 import { CiCreditCard2 } from "react-icons/ci";
 import { CiLock } from "react-icons/ci";
 import { CiPhone } from "react-icons/ci";
-import { TextField, Checkbox, FormControlLabel } from "@mui/material";
-import Link from "next/link";
 import Footer from "../../components/Footer/page";
 import Newsletter from "../../components/Newsletter/page";
 
@@ -222,8 +220,8 @@ const Home = () => {
       {/* Banner Grid Section */}
       <div
         className={`mt-14 mb-10 grid gap-4 w-[90%] mx-auto ${categories.length <= 3
-            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+          ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+          : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           }`}
       >
         {categories.map((category) => (
