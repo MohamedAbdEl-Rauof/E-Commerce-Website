@@ -23,6 +23,27 @@ interface Product {
     PriceBeforeDiscount?: string;
 }
 
+interface FilterState {
+    categoryId: string;
+    priceRange: string;
+}
+
+interface PriceRange {
+    label: string;
+    range: string;
+    min: number;
+    max: number | null;
+}
+
+const priceRanges: PriceRange[] = [
+    { label: "All Price", range: "all", min: 0, max: null },
+    { label: "$0.00 - $99.99", range: "0-99.99", min: 0, max: 99.99 },
+    { label: "$100.00 - $199.99", range: "100-199.99", min: 100, max: 199.99 },
+    { label: "$200.00 - $299.99", range: "200-299.99", min: 200, max: 299.99 },
+    { label: "$300.00 - $399.99", range: "300-399.99", min: 300, max: 399.99 },
+    { label: "$400.00+", range: "400", min: 400, max: null }
+];
+
 const Shop = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all"); // Default to "All Rooms"
@@ -32,17 +53,25 @@ const Shop = () => {
     const [favorite, setFavorite] = useState(
         new Array(products.length).fill(false)
     );
+    const [allProducts, setAllProducts] = useState<Product[]>([]); // Store all products for client-side filtering
+
+
+    const initialFilterState: FilterState = {
+        categoryId: "all",
+        priceRange: "all"
+    };
+
+    const [filters, setFilters] = useState<FilterState>(initialFilterState);
+
 
     // Fetch categories from API
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const response = await fetch("/api/categories");
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const data = await response.json();
-                setCategories([{ _id: "all", name: "All Rooms" }, ...data]); // Add "All Rooms" as a default option
+                setCategories([{ _id: "all", name: "All Rooms" }, ...data]);
             } catch (error) {
                 console.error("Error fetching categories:", error);
             }
@@ -57,12 +86,11 @@ const Shop = () => {
             setLoading(true);
             try {
                 const response = await fetch('/api/products');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const data = await response.json();
-                setProducts(data); // Initially show all products
-                setFavorite(new Array(data.length).fill(false)); // Initialize favorites array
+                setAllProducts(data); // Store all products
+                setProducts(data);
+                setFavorite(new Array(data.length).fill(false));
             } catch (error) {
                 console.error("Error fetching all products:", error);
             } finally {
@@ -72,6 +100,50 @@ const Shop = () => {
         fetchAllProducts();
     }, []);
 
+
+    // Apply filters client-side
+    const applyFilters = () => {
+        let filteredProducts = [...allProducts];
+
+        // Apply category filter
+        if (filters.categoryId !== 'all') {
+            filteredProducts = filteredProducts.filter(
+                product => product.categoryId === filters.categoryId
+            );
+        }
+
+        // Apply price filter
+        if (filters.priceRange !== 'all') {
+            const selectedRange = priceRanges.find(range => range.range === filters.priceRange);
+            if (selectedRange) {
+                filteredProducts = filteredProducts.filter(product => {
+                    const price = product.price;
+                    if (selectedRange.max === null) {
+                        return price >= selectedRange.min;
+                    }
+                    return price >= selectedRange.min && price <= selectedRange.max;
+                });
+            }
+        }
+
+        setProducts(filteredProducts);
+    };
+
+    // Apply filters whenever filter state changes
+    useEffect(() => {
+        applyFilters();
+    }, [filters]);
+
+    const handleFilterChange = (filterType: keyof FilterState, value: string) => {
+        setFilters(prevFilters => ({
+            ...prevFilters,
+            [filterType]: value
+        }));
+    };
+
+    const clearFilters = () => {
+        setFilters(initialFilterState);
+    };
 
     // Fetch products when category is selected
     useEffect(() => {
@@ -130,25 +202,30 @@ const Shop = () => {
         }
     };
 
-    const fetchFilteredProducts = async (categoryId: string, priceRange: string) => {
+    const fetchFilteredProducts = async (newFilters: FilterState) => {
         setLoading(true);
         try {
-            let url = '/api/products?';
+            const queryParams = new URLSearchParams();
 
-            // Add category filter if not "all"
-            if (categoryId !== "all") {
-                url += `categoryId=${categoryId}&`;
+            if (newFilters.categoryId !== "all") {
+                queryParams.append("categoryId", newFilters.categoryId);
             }
 
-            // Add price filter if not "all"
-            if (priceRange !== "all") {
-                url += `priceRange=${priceRange}`;
+            if (newFilters.priceRange !== "all") {
+                queryParams.append("priceRange", newFilters.priceRange);
             }
 
+            const url = `/api/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
             const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
             const data = await response.json();
             setProducts(data);
+            setFavorite(new Array(data.length).fill(false));
+
         } catch (error) {
             console.error("Error fetching filtered products:", error);
         } finally {
@@ -161,6 +238,65 @@ const Shop = () => {
         fetchFilteredProducts(selectedCategoryId, range);
     };
 
+
+
+
+    useEffect(() => {
+        fetchFilteredProducts(initialFilterState);
+    }, []);
+
+    const ActiveFilters = () => {
+        const activeFilters = [];
+
+        if (filters.categoryId !== 'all') {
+            const category = categories.find(c => c._id === filters.categoryId);
+            activeFilters.push({
+                type: 'Category',
+                value: category?.name || '',
+                clear: () => handleFilterChange('categoryId', 'all')
+            });
+        }
+
+        if (filters.priceRange !== 'all') {
+            const price = priceRanges.find(p => p.range === filters.priceRange);
+            activeFilters.push({
+                type: 'Price',
+                value: price?.label || '',
+                clear: () => handleFilterChange('priceRange', 'all')
+            });
+        }
+
+        if (activeFilters.length === 0) return null;
+
+        return (
+            <div className="mb-6">
+                <div className="flex items-center flex-wrap gap-2">
+                    {activeFilters.map((filter, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center bg-gray-100 px-3 py-1 rounded-full"
+                        >
+                            <span className="text-sm font-medium">{filter.type}: {filter.value}</span>
+                            <button
+                                onClick={filter.clear}
+                                className="ml-2 text-gray-500 hover:text-black"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    ))}
+                    {activeFilters.length > 1 && (
+                        <button
+                            onClick={clearFilters}
+                            className="text-sm text-gray-500 hover:text-black underline"
+                        >
+                            Clear all filters
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div>
@@ -191,6 +327,8 @@ const Shop = () => {
                     </div>
                 </div>
 
+                <ActiveFilters />
+
                 {/* Filters and Products Section */}
                 <div className="mt-10 flex space-x-8">
                     {/* Filter Section */}
@@ -202,14 +340,24 @@ const Shop = () => {
 
                         {/* Category Filter */}
                         <div className="mb-8">
-                            <h2 className="text-lg font-bold mb-4">Category</h2>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-bold">Category</h2>
+                                {filters.categoryId !== 'all' && (
+                                    <button
+                                        onClick={() => handleFilterChange('categoryId', 'all')}
+                                        className="text-sm text-gray-500 hover:text-black"
+                                    >
+                                        Clear
+                                    </button>
+                                )}
+                            </div>
                             <div>
                                 {categories.map((cat) => (
                                     <div key={cat._id} className="mb-2">
                                         <label
-                                            className={`cursor-pointer hover:text-black hover:underline ${selectedCategoryId === cat._id ? 'font-bold text-black' : 'text-gray-600'
+                                            className={`cursor-pointer hover:text-black hover:underline ${filters.categoryId === cat._id ? 'font-bold text-black' : 'text-gray-600'
                                                 }`}
-                                            onClick={() => handleCategoryClick(cat._id)}
+                                            onClick={() => handleFilterChange('categoryId', cat._id)}
                                         >
                                             {cat.name}
                                         </label>
@@ -219,28 +367,32 @@ const Shop = () => {
                         </div>
 
                         {/* Price Filter */}
+
                         <div className="mb-8">
-                            <h2 className="text-lg font-bold mb-4">Price</h2>
-                            {[
-                                { label: "All Price", range: "all" },
-                                { label: "$0.00 - $99.99", range: "0-99.99" },
-                                { label: "$100.00 - $199.99", range: "100-199.99" },
-                                { label: "$200.00 - $299.99", range: "200-299.99" },
-                                { label: "$300.00 - $399.99", range: "300-399.99" },
-                                { label: "$400.00+", range: "400" },
-                            ].map((price, index) => (
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-bold">Price</h2>
+                                {filters.priceRange !== 'all' && (
+                                    <button
+                                        onClick={() => handleFilterChange('priceRange', 'all')}
+                                        className="text-sm text-gray-500 hover:text-black"
+                                    >
+                                        Clear
+                                    </button>
+                                )}
+                            </div>
+                            {priceRanges.map((price, index) => (
                                 <div key={index} className="flex items-center mb-2">
                                     <input
                                         type="radio"
                                         id={price.range}
                                         name="price"
                                         className="mr-2"
-                                        checked={selectedPriceRange === price.range}
-                                        onChange={() => handlePriceRangeChange(price.range)}
+                                        checked={filters.priceRange === price.range}
+                                        onChange={() => handleFilterChange('priceRange', price.range)}
                                     />
                                     <label
                                         htmlFor={price.range}
-                                        className={`text-gray-700 cursor-pointer ${selectedPriceRange === price.range ? 'font-bold' : ''
+                                        className={`text-gray-700 cursor-pointer ${filters.priceRange === price.range ? 'font-bold' : ''
                                             }`}
                                     >
                                         {price.label}
