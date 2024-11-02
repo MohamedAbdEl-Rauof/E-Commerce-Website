@@ -1,45 +1,36 @@
-import clientPromise from "../../lib/mongodb"; 
+import clientPromise from "../../lib/mongodb";
 import { NextApiRequest, NextApiResponse } from "next";
+import { ObjectId } from "mongodb"; // Import ObjectId for MongoDB
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const client = await clientPromise;
   const db = client.db("e-commerce");
 
-  // Handle POST request to create a new product
-  if (req.method === "POST") {
+  // Handle GET request to fetch products
+  if (req.method === "GET") {
     try {
-      const { name, description, price, image, categoryId,PriceBeforeDiscount } = req.body;
+      const { categoryId } = req.query;
 
-      // Create a new product object
-      const newProduct = {
-        name,
-        description,
-        price,
-        image,
-        categoryId,
-        createdAt: new Date(),
-        PriceBeforeDiscount
-      };
-      
-      const result = await db.collection("products").insertOne(newProduct); // Save to the database
+      // If categoryId is provided, fetch products by category
+      let products;
+      if (categoryId && typeof categoryId === 'string') {
+        products = await db
+          .collection("products")
+          .find({ categoryId: new ObjectId(categoryId) }) // Ensure categoryId is queried as ObjectId
+          .toArray();
+      } else {
+        // Otherwise, fetch all products
+        products = await db.collection("products").find().toArray();
+      }
 
-      res.status(201).json({ message: "Product created", product: { id: result.insertedId, ...newProduct } });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Error creating product" });
-    }
-  }
-  // Handle GET request to fetch all products
-  else if (req.method === "GET") {
-    try {
-      const products = await db.collection("products").find().toArray(); // Fetch all products
       res.status(200).json(products);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching products:", error);
       res.status(500).json({ error: "Error fetching products" });
     }
   } else {
-    res.setHeader("Allow", ["POST", "GET"]);
+    // Handle methods not allowed
+    res.setHeader("Allow", ["GET"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 };

@@ -13,6 +13,7 @@ interface Category {
 
 const Shop = () => {
     const [category, setCategory] = useState<Category[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null); // State for selected category ID
 
     // Fetch categories from API
     useEffect(() => {
@@ -39,6 +40,14 @@ const Shop = () => {
         { icon: FaPause, label: "Split View" },
         { icon: FaEquals, label: "List View" }
     ];
+
+    // Handle category click
+    const handleCategoryClick = (categoryId: string) => {
+        console.log("Clicked category ID:", categoryId); // Log the correct category ID
+        setSelectedCategoryId(categoryId); // Update the state with the selected category ID
+    };
+
+
 
     return (
         <div>
@@ -83,10 +92,11 @@ const Shop = () => {
                             <h2 className="text-lg font-bold mb-4">Category</h2>
                             <div>
                                 {category.map((cat) => (
-                                    <div key={cat.id} className="mb-2">
+                                    <div key={cat._id} className="mb-2"> {/* Correct key */}
                                         <label
-                                            htmlFor={cat.id}
+                                            htmlFor={cat._id} // Correct htmlFor
                                             className="text-gray-600 cursor-pointer hover:text-black hover:underline"
+                                            onClick={() => handleCategoryClick(cat._id)} // Pass correct ID
                                         >
                                             {cat.name}
                                         </label>
@@ -94,6 +104,9 @@ const Shop = () => {
                                 ))}
                             </div>
                         </div>
+
+
+
 
                         {/* Price Filter */}
                         <div className="mb-8">
@@ -133,10 +146,16 @@ const Shop = () => {
                             </div>
                         </div>
 
+                        {/* Display the selected category ID */}
+                        {selectedCategoryId && (
+                            <div className="mt-4 text-lg font-bold">
+                                Selected Category ID: {selectedCategoryId}
+                            </div>
+                        )}
+
                         {/* Additional Content can be added here */}
                     </div>
                 </div>
-
             </div>
         </div>
     );
