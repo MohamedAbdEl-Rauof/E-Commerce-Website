@@ -7,33 +7,69 @@ import { IoFilter } from "react-icons/io5";
 import { FaTh, FaThLarge, FaPause, FaEquals } from 'react-icons/fa';
 
 interface Category {
-    id: string;
+    _id: string;
     name: string;
 }
 
+interface Product {
+    _id: string;
+    name: string;
+    image: string;
+    price: number;
+    categoryId: string;
+    PriceBeforeDiscount?: string;
+}
+
 const Shop = () => {
-    const [category, setCategory] = useState<Category[]>([]);
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null); // State for selected category ID
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(false);
 
     // Fetch categories from API
     useEffect(() => {
-        const fetchCategory = async () => {
+        const fetchCategories = async () => {
             try {
                 const response = await fetch("/api/categories");
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                setCategory(data);
-                console.log("Fetched Categories:", data);
+                setCategories(data);
             } catch (error) {
-                console.error("Error fetching category:", error);
+                console.error("Error fetching categories:", error);
             }
         };
-        fetchCategory();
+        fetchCategories();
     }, []);
 
-    // Array of sort icons and labels for better structure and accessibility
+    // Fetch products when category is selected
+    useEffect(() => {
+        // In your Shop component's fetchProducts function:
+        const fetchProducts = async () => {
+            if (!selectedCategoryId) return;
+
+            setLoading(true);
+            try {
+                const response = await fetch(`/api/products?categoryId=${selectedCategoryId}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                setProducts(data);
+            } catch (error) {
+                console.error("Error fetching products:", error);
+                // Optionally show error to user via toast/alert
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, [selectedCategoryId]);
+
+    // Array of sort icons and labels
     const sortIcons = [
         { icon: FaTh, label: "Grid View" },
         { icon: FaThLarge, label: "Large Grid View" },
@@ -43,11 +79,8 @@ const Shop = () => {
 
     // Handle category click
     const handleCategoryClick = (categoryId: string) => {
-        console.log("Clicked category ID:", categoryId); // Log the correct category ID
-        setSelectedCategoryId(categoryId); // Update the state with the selected category ID
+        setSelectedCategoryId(categoryId);
     };
-
-
 
     return (
         <div>
@@ -73,12 +106,12 @@ const Shop = () => {
                             Shop Page
                         </h1>
                         <p className="mt-4 text-center text-xs sm:text-sm md:text-base lg:text-base text-gray-300 sm:mt-1 md:mt-1">
-                            Let’s design the place you always imagined.
+                            Let's design the place you always imagined.
                         </p>
                     </div>
                 </div>
 
-                {/* Filters and Sorting Section */}
+                {/* Filters and Products Section */}
                 <div className="mt-10 flex space-x-8">
                     {/* Filter Section */}
                     <div className="w-1/4">
@@ -91,12 +124,12 @@ const Shop = () => {
                         <div className="mb-8">
                             <h2 className="text-lg font-bold mb-4">Category</h2>
                             <div>
-                                {category.map((cat) => (
-                                    <div key={cat._id} className="mb-2"> {/* Correct key */}
+                                {categories.map((cat) => (
+                                    <div key={cat._id} className="mb-2">
                                         <label
-                                            htmlFor={cat._id} // Correct htmlFor
-                                            className="text-gray-600 cursor-pointer hover:text-black hover:underline"
-                                            onClick={() => handleCategoryClick(cat._id)} // Pass correct ID
+                                            className={`cursor-pointer hover:text-black hover:underline ${selectedCategoryId === cat._id ? 'font-bold text-black' : 'text-gray-600'
+                                                }`}
+                                            onClick={() => handleCategoryClick(cat._id)}
                                         >
                                             {cat.name}
                                         </label>
@@ -104,9 +137,6 @@ const Shop = () => {
                                 ))}
                             </div>
                         </div>
-
-
-
 
                         {/* Price Filter */}
                         <div className="mb-8">
@@ -129,9 +159,10 @@ const Shop = () => {
                         </div>
                     </div>
 
-                    {/* Sort and Display Section */}
-                    <div className="w-3/4 flex flex-col items-end">
-                        <div className="flex items-center space-x-4 mb-6">
+                    {/* Products Section */}
+                    <div className="w-3/4">
+                        {/* Sort Controls */}
+                        <div className="flex justify-end items-center space-x-4 mb-6">
                             <h2 className="text-lg font-bold">Sort by ↓</h2>
                             <div className="flex space-x-2">
                                 {sortIcons.map(({ icon: Icon, label }, index) => (
@@ -146,14 +177,42 @@ const Shop = () => {
                             </div>
                         </div>
 
-                        {/* Display the selected category ID */}
-                        {selectedCategoryId && (
-                            <div className="mt-4 text-lg font-bold">
-                                Selected Category ID: {selectedCategoryId}
+                        {/* Products Grid */}
+                        {loading ? (
+                            <div className="text-center py-10">Loading products...</div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {products.map((product) => (
+                                    <div key={product._id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+                                        <div className="relative h-48">
+                                            <img
+                                                src={product.image}
+                                                alt={product.name}
+                                                layout="fill"
+                                                objectFit="cover"
+                                                className="rounded-lg"
+                                            />
+                                        </div>
+                                        <h3 className="mt-4 text-lg font-semibold">{product.name}</h3>
+                                        <div className="mt-2 flex justify-between items-center">
+                                            <span className="text-lg font-bold">${product.price}</span>
+                                            {product.PriceBeforeDiscount && (
+                                                <span className="text-sm text-gray-500 line-through">
+                                                    ${product.PriceBeforeDiscount}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
 
-                        {/* Additional Content can be added here */}
+                        {/* No Products Message */}
+                        {!loading && products.length === 0 && selectedCategoryId && (
+                            <div className="text-center py-10 text-gray-500">
+                                No products found for this category
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
