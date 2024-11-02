@@ -160,15 +160,14 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="">
-
+    <div>
       {/* Header Section*/}
       <Header />
 
       {/* Slider Section */}
       <div className="mt-10 w-[90%] mx-auto">
         <div
-          className="flex items-center justify-centeroverflow-hidden relative"
+          className="relative overflow-hidden"
           style={{
             width: containerWidth,
             height: containerHeight,
@@ -178,24 +177,28 @@ const Home = () => {
             <img
               src={images[currentIndex].url}
               alt={images[currentIndex].alt || `Image ${currentIndex + 1}`}
-              className="absolute inset-0 w-full h-full object-cover rounded-sm"
+              className="absolute inset-0 w-full h-full object-cover rounded-lg"
               style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
                 objectFit: "cover",
               }}
             />
           )}
 
+          {/* Previous button */}
           <button
             onClick={prevImage}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white text-black rounded-full p-2 "
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white text-black rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-gray-200 transition duration-300"
             aria-label="Previous Image"
           >
             &#10094;
           </button>
 
+          {/* Next button */}
           <button
             onClick={nextImage}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white text-black rounded-full p-2"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white text-black rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-gray-200 transition duration-300"
             aria-label="Next Image"
           >
             &#10095;
@@ -206,11 +209,8 @@ const Home = () => {
       {/* Text Section */}
       <div className="mt-14 w-[90%] mx-auto flex md:flex-row justify-between">
         <div className="md:w-1/2">
-          <h1 className="font-bold text-5xl">Simply Unique</h1>
-          <h1 className="font-bold text-5xl">Simply Better</h1>
-        </div>
-        <div className="pt-8 md:mt-0 md:w-1/2 md:ml-4">
-          <p>
+          <h1 className="font-bold text-3xl">Simply Unique / Simply Better</h1>
+          <p className="pt-5">
             <strong>3legant</strong> is a gift & decorations store based in
             HCMC, Vietnam. Established since 2019.
           </p>
@@ -219,14 +219,15 @@ const Home = () => {
 
       {/* Banner Grid Section */}
       <div
-        className={`mt-14 mb-10 grid gap-4 w-[90%] mx-auto ${categories.length <= 3
-          ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-          : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-          }`}
+        className={`mt-14 mb-10 grid gap-4 w-[90%] mx-auto ${
+          categories.length <= 3
+            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        }`}
       >
-        {categories.map((category) => (
+        {categories.map((category, index) => (
           <div
-            key={category.id}
+            key={category.id || index}
             className="relative overflow-hidden rounded-md group"
           >
             <img
@@ -240,7 +241,7 @@ const Home = () => {
             {/* Category name and link always visible */}
             <div className="absolute bottom-0 left-0 p-4">
               <h1 className="text-lg font-bold text-white">{category.name}</h1>
-              <u className="flex items-center mt-1 text-blue-400 cursor-pointer">
+              <u className="flex items-center mt-1 text-black font-bold cursor-pointer shad">
                 Show Now <FaArrowRight className="ml-1" />
               </u>
             </div>
@@ -252,8 +253,8 @@ const Home = () => {
       <div className="mt-14 w-[90%] mx-auto">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold">New</h1>
-            <h1 className="text-4xl font-bold">Arrivals</h1>
+            <h1 className="text-4xl font-bold">New Arrivals</h1>
+            <h1 className="text-4xl font-bold"></h1>
           </div>
           <div>
             <u className="flex items-center text-black font-bold cursor-pointer hover:underline">
@@ -358,28 +359,28 @@ const Home = () => {
 
       {/* Values Section */}
       <div className="mb-6 w-[90%] mx-auto">
-        <div className="flex flex-wrap gap-5 justify-center">
+        <div className="flex flex-wrap gap-8 justify-center">
           <div className="flex flex-col items-center justify-center bg-[#F3F5F7] w-44 h-44 rounded-full p-4 text-center">
             <CiDeliveryTruck className="text-5xl text-gray-700 mb-2" />
-            <h1 className="mt-2 font-bold text-lg">Free Shipping</h1>
+            <h1 className="mt-2 font-bold text-base">Free Shipping</h1>
             <p className="text-sm text-gray-500">Order above $200</p>
           </div>
 
           <div className="flex flex-col items-center justify-center bg-[#F3F5F7] w-44 h-44 rounded-full p-4 text-center">
             <CiCreditCard2 className="text-5xl text-gray-700 mb-2" />
-            <h1 className="mt-2 font-bold text-lg">Money-back</h1>
+            <h1 className="mt-2 font-bold text-base">Money-back</h1>
             <p className="text-sm text-gray-500">30 days guarantee</p>
           </div>
 
           <div className="flex flex-col items-center justify-center bg-[#F3F5F7] w-44 h-44 rounded-full p-4 text-center">
             <CiLock className="text-5xl text-gray-700 mb-2" />
-            <h1 className="mt-2 font-bold text-lg">Secure Payments</h1>
+            <h1 className="mt-2 font-bold text-base">Secure Payments</h1>
             <p className="text-sm text-gray-500">Secured by Stripe</p>
           </div>
 
           <div className="flex flex-col items-center justify-center bg-[#F3F5F7] w-44 h-44 rounded-full p-4 text-center">
             <CiPhone className="text-5xl text-gray-700 mb-2" />
-            <h1 className="mt-2 font-bold text-lg">24/7 Support</h1>
+            <h1 className="mt-2 font-bold text-base">24/7 Support</h1>
             <p className="text-sm text-gray-500">Phone and Email support</p>
           </div>
         </div>
@@ -397,8 +398,8 @@ const Home = () => {
         </div>
 
         {/* Right Content Section */}
-        <div className="flex-1 p-6 md:p-4 flex flex-col justify-center bg-white ml-9">
-          <div className="text-center md:text-left mx-auto md:mx-0 md:w-10/12 lg:w-8/12">
+        <div className="flex-1 p-6 md:p-4 flex flex-col justify-center bg-gray-100">
+          <div className="pl-9 text-center md:text-left mx-auto md:mx-0 md:w-10/12 lg:w-8/12">
             <p className="mt-6 text-blue-500 font-bold text-lg md:text-xl">
               SALE UP TO 35% OFF
             </p>

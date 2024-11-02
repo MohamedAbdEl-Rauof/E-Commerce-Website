@@ -12,7 +12,7 @@ const Newsletter = () => {
             <div className="absolute inset-0 flex flex-col items-center justify-center  ">
                 <h1 className="text-2xl font-bold">Join Our Newsletter</h1>
                 <p className="mt-6 text-center">
-                    <Link href="/Signup" className="font-bold text-yellow-400">
+                    <Link href="/Signup" className="font-bold text-orange-400">
                         <u>Sign up</u>
                     </Link>{" "}
                     for deals, new products, and promotions
