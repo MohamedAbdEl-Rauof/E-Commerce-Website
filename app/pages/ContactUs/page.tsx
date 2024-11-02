@@ -12,7 +12,7 @@ import { TextField, Button } from "@mui/material";
 import Footer from "../../components/Footer/page";
 
 const ContactUs = () => {
-  const position = [51.505, -0.09];
+  const position: [number, number] = [51.505, -0.09];
 
   return (
     <div>

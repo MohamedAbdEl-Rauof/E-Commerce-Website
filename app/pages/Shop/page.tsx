@@ -46,14 +46,14 @@ const priceRanges: PriceRange[] = [
 
 const Shop = () => {
     const [categories, setCategories] = useState<Category[]>([]);
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all"); // Default to "All Rooms"
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedPriceRange, setSelectedPriceRange] = useState<string>("all");
     const [loading, setLoading] = useState(false);
     const [favorite, setFavorite] = useState(
         new Array(products.length).fill(false)
     );
-    const [allProducts, setAllProducts] = useState<Product[]>([]); // Store all products for client-side filtering
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
 
 
     const initialFilterState: FilterState = {
@@ -88,7 +88,7 @@ const Shop = () => {
                 const response = await fetch('/api/products');
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const data = await response.json();
-                setAllProducts(data); // Store all products
+                setAllProducts(data);
                 setProducts(data);
                 setFavorite(new Array(data.length).fill(false));
             } catch (error) {
@@ -178,30 +178,6 @@ const Shop = () => {
         { icon: FaEquals, label: "List View" }
     ];
 
-    const handleCategoryClick = async (categoryId: string) => {
-        setSelectedCategoryId(categoryId);
-        setLoading(true);
-        fetchFilteredProducts(categoryId, selectedPriceRange);
-
-        try {
-            if (categoryId === "all") {
-                const response = await fetch('/api/products');
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                const data = await response.json();
-                setProducts(data);
-            } else {
-                const response = await fetch(`/api/products?categoryId=${categoryId}`);
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                const data = await response.json();
-                setProducts(data);
-            }
-        } catch (error) {
-            console.error("Error fetching products:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const fetchFilteredProducts = async (newFilters: FilterState) => {
         setLoading(true);
         try {
@@ -232,14 +208,6 @@ const Shop = () => {
             setLoading(false);
         }
     };
-
-    const handlePriceRangeChange = async (range: string) => {
-        setSelectedPriceRange(range);
-        fetchFilteredProducts(selectedCategoryId, range);
-    };
-
-
-
 
     useEffect(() => {
         fetchFilteredProducts(initialFilterState);
@@ -367,7 +335,6 @@ const Shop = () => {
                         </div>
 
                         {/* Price Filter */}
-
                         <div className="mb-8">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-lg font-bold">Price</h2>
