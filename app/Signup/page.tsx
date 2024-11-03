@@ -22,57 +22,40 @@ type UserData = {
   agreed: boolean;
 };
 
-// Define form validation schema
+
 const schema = object({
   name: pipe(
     string(),
     nonEmpty("Name is required"),
-    custom(
-      (value) => /^[A-Za-z\s]+$/.test(value),
-      "Name must not contain numbers or special characters"
-    )
+    custom((value) => /^[A-Za-z\s]+$/.test(value as string), "Name must not contain numbers or special characters")
   ),
   username: pipe(
     string(),
     nonEmpty("Username is required"),
-    custom(
-      (value) => value.length >= 3,
-      "Username must be at least 3 characters long"
-    )
+    custom((value) => (value as string).length >= 3, "Username must be at least 3 characters long")
   ),
   email: pipe(
     string(),
     nonEmpty("Email is required"),
-    custom(
-      (value) => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value),
-      "Please enter a valid email address"
-    )
+    custom((value) => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value as string), "Please enter a valid email address")
   ),
   phone: pipe(
     string(),
     nonEmpty("Phone number is required"),
-    custom(
-      (value) => /^\+?[0-9]\d{0,14}$/.test(value),
-      "Please enter a valid phone number"
-    )
+    custom((value) => /^\+?[0-9]\d{0,14}$/.test(value as string), "Please enter a valid phone number")
   ),
   password: pipe(
     string(),
     nonEmpty("Password is required"),
-    custom(
-      (value) => value.length >= 8,
-      "Password must be at least 8 characters long"
-    )
+    custom((value) => (value as string).length >= 8, "Password must be at least 8 characters long")
   ),
   confirmPassword: string(),
   agreed: pipe(
     boolean(),
-    custom(
-      (value) => value === true,
-      "You must agree to the terms and conditions"
-    )
+    custom((value) => value === true, "You must agree to the terms and conditions")
   ),
 });
+
 
 const SignUp = () => {
   const {
@@ -275,7 +258,7 @@ const SignUp = () => {
                   sx={{ mt: 2 }}
                   disabled={!isValid}
                 >
-                  Register
+                  Sign Up
                 </Button>
               </div>
             </div>
