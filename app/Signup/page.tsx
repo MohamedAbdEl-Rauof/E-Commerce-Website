@@ -1,8 +1,16 @@
 "use client";
-import { TextField, Checkbox, FormControlLabel, Typography, NoSsr } from "@mui/material";
+import {
+  TextField,
+  Checkbox,
+  FormControlLabel,
+  Typography,
+  Button,
+} from "@mui/material";
 import Link from "next/link";
-import { useForm, Controller, SubmitHandler } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import Swal from "sweetalert2";
+import { valibotResolver } from "@hookform/resolvers/valibot";
+import { object, string, pipe, nonEmpty, custom, boolean } from "valibot";
 
 type UserData = {
   name: string;
@@ -14,8 +22,67 @@ type UserData = {
   agreed: boolean;
 };
 
+// Define form validation schema
+const schema = object({
+  name: pipe(
+    string(),
+    nonEmpty("Name is required"),
+    custom(
+      (value) => /^[A-Za-z\s]+$/.test(value),
+      "Name must not contain numbers or special characters"
+    )
+  ),
+  username: pipe(
+    string(),
+    nonEmpty("Username is required"),
+    custom(
+      (value) => value.length >= 3,
+      "Username must be at least 3 characters long"
+    )
+  ),
+  email: pipe(
+    string(),
+    nonEmpty("Email is required"),
+    custom(
+      (value) => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value),
+      "Please enter a valid email address"
+    )
+  ),
+  phone: pipe(
+    string(),
+    nonEmpty("Phone number is required"),
+    custom(
+      (value) => /^\+?[0-9]\d{0,14}$/.test(value),
+      "Please enter a valid phone number"
+    )
+  ),
+  password: pipe(
+    string(),
+    nonEmpty("Password is required"),
+    custom(
+      (value) => value.length >= 8,
+      "Password must be at least 8 characters long"
+    )
+  ),
+  confirmPassword: string(),
+  agreed: pipe(
+    boolean(),
+    custom(
+      (value) => value === true,
+      "You must agree to the terms and conditions"
+    )
+  ),
+});
+
 const SignUp = () => {
-  const { control, handleSubmit, reset } = useForm({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+    reset,
+  } = useForm<UserData>({
+    resolver: valibotResolver(schema),
+    mode: "onChange",
     defaultValues: {
       name: "",
       username: "",
@@ -27,7 +94,16 @@ const SignUp = () => {
     },
   });
 
-  const onSubmit:SubmitHandler<UserData> = async (data) => {
+  const onSubmit = async (data: UserData) => {
+    if (data.password !== data.confirmPassword) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Passwords do not match!",
+      });
+      return;
+    }
+
     try {
       const response = await fetch("/api/users", {
         method: "POST",
@@ -35,7 +111,10 @@ const SignUp = () => {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error("Failed to register.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error); // Use the specific error message from the server
+      }
 
       await response.json();
       Swal.fire({
@@ -43,13 +122,13 @@ const SignUp = () => {
         text: "User registered successfully!",
         icon: "success",
       });
-      reset();
-    } catch (error) {
-      console.error(error);
+      reset(); // Assuming 'reset' is a function to clear the form fields
+    } catch (error: any) {
+      console.error(error.message);
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "Error registering user!",
+        text: error.message, // Show the specific error message to the user
       });
     }
   };
@@ -84,6 +163,8 @@ const SignUp = () => {
                     label="Your name"
                     variant="standard"
                     className="mt-4"
+                    error={!!errors.name}
+                    helperText={errors.name?.message}
                   />
                 )}
               />
@@ -97,6 +178,8 @@ const SignUp = () => {
                     label="Username"
                     variant="standard"
                     className="mt-4"
+                    error={!!errors.username}
+                    helperText={errors.username?.message}
                   />
                 )}
               />
@@ -110,6 +193,8 @@ const SignUp = () => {
                     label="Email"
                     variant="standard"
                     className="mt-4"
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
                   />
                 )}
               />
@@ -123,6 +208,8 @@ const SignUp = () => {
                     label="Your Phone"
                     variant="standard"
                     className="mt-4"
+                    error={!!errors.phone}
+                    helperText={errors.phone?.message}
                   />
                 )}
               />
@@ -137,6 +224,8 @@ const SignUp = () => {
                     variant="standard"
                     type="password"
                     className="mt-4"
+                    error={!!errors.password}
+                    helperText={errors.password?.message}
                   />
                 )}
               />
@@ -151,6 +240,8 @@ const SignUp = () => {
                     variant="standard"
                     type="password"
                     className="mt-4"
+                    error={!!errors.confirmPassword}
+                    helperText={errors.confirmPassword?.message}
                   />
                 )}
               />
@@ -161,7 +252,9 @@ const SignUp = () => {
                   control={control}
                   render={({ field }) => (
                     <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value || false} />}
+                      control={
+                        <Checkbox {...field} checked={field.value || false} />
+                      }
                       label={
                         <Typography>
                           I agree with <strong>Privacy Policy</strong> and{" "}
@@ -174,12 +267,16 @@ const SignUp = () => {
               </div>
 
               <div className="text-center mt-9">
-                <button
+                <Button
                   type="submit"
+                  variant="contained"
+                  color="primary"
                   className="bg-black text-white rounded w-full h-10 md:w-72 hover:bg-neutral-700 transition duration-300 ease-in-out"
+                  sx={{ mt: 2 }}
+                  disabled={!isValid}
                 >
-                  Sign Up
-                </button>
+                  Register
+                </Button>
               </div>
             </div>
           </div>
