@@ -28,7 +28,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(200).json({ message: "Admin login successful" });
       }
 
-      // For other users
       return res.status(200).json({ message: "User login successful" });
 
     } catch (e) {

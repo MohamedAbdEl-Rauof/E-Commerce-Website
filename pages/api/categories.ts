@@ -10,9 +10,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       const { name, image } = req.body;
 
-      // Create a new category object
       const newCategory = { name, image };
-      const result = await db.collection("categories").insertOne(newCategory); // Save to the database
+      const result = await db.collection("categories").insertOne(newCategory);
 
       res
         .status(201)
@@ -28,7 +27,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   // Handle GET request to fetch all categories
   else if (req.method === "GET") {
     try {
-      const categories = await db.collection("categories").find().toArray(); // Fetch all categories
+      const categories = await db.collection("categories").find().toArray(); 
       res.status(200).json(categories);
     } catch (error) {
       console.error(error);

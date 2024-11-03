@@ -1,4 +1,3 @@
-// users.ts
 import clientPromise from "../../lib/mongodb";
 import { NextApiRequest, NextApiResponse } from "next";
 import bcrypt from "bcrypt";
@@ -36,7 +35,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         username,
         email,
         phone,
-        password: hashedPassword, // Store the hashed password
+        password: hashedPassword, 
       };
 
       const result = await db.collection("users").insertOne(newUser);

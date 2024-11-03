@@ -1,17 +1,17 @@
 "use client";
 import { TextField } from "@mui/material";
 import Link from "next/link";
-import Swal from "sweetalert2"; // Ensure you import SweetAlert2 for notifications
+import Swal from "sweetalert2"; 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter for navigation
+import { useRouter } from "next/navigation"; 
 
 const Signin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter(); // Initialize the router
+  const router = useRouter(); 
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); // Prevent the default form submission
+    event.preventDefault(); 
 
     try {
       const response = await fetch("/api/auth/signin", {
@@ -34,9 +34,9 @@ const Signin = () => {
 
       // Redirect based on user type
       if (result.message === "Admin login successful") {
-        router.push("/admin/dashboard"); // Redirect to dashboard for admin
+        router.push("/admin/dashboard"); 
       } else {
-        router.push("/pages/Home"); // Redirect to home for regular users
+        router.push("/pages/Home"); 
       }
 
     } catch (error) {
