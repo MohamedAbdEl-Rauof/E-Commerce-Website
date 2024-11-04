@@ -1,3 +1,4 @@
+// app / admin / dashboeard
 import React from 'react'
 
 const page = () => {

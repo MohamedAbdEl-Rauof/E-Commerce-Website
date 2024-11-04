@@ -1,50 +1,52 @@
+// app / Signin / page.tsx
 "use client";
 import { TextField } from "@mui/material";
 import Link from "next/link";
-import Swal from "sweetalert2"; 
+import Swal from "sweetalert2";
 import { useState } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 const Signin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter(); 
+  const router = useRouter();
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); 
+    event.preventDefault();
 
     try {
-      const response = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error);
+      if (result?.error) {
+        throw new Error(result.error);
       }
 
-      const result = await response.json();
       Swal.fire({
         title: "Success!",
-        text: result.message,
+        text: "Login successful",
         icon: "success",
       });
 
-      // Redirect based on user type
-      if (result.message === "Admin login successful") {
-        router.push("/admin/dashboard"); 
-      } else {
-        router.push("/pages/Home"); 
-      }
+      // Fetch session to check role
+      const response = await fetch("/api/auth/session");
+      const session = await response.json();
 
+      if (session?.user?.role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/pages/Home");
+      }
     } catch (error) {
       console.error("Sign-in error:", error);
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "An unexpected error occurred.",
+        text: "Invalid email or password.",
       });
     }
   };
