@@ -11,7 +11,6 @@ import { CiPhone } from "react-icons/ci";
 import Footer from "../../components/Footer/page";
 import Newsletter from "../../components/Newsletter/page";
 
-
 interface Image {
   url: string;
   alt?: string;
@@ -160,6 +159,29 @@ const Home = () => {
     fetchArticle();
   }, []);
 
+  // add to product api
+  const addToCart = async () => {
+    try {
+      const response = await axios.post("/api/add-to-cart", {
+        userId, // Pass the authenticated user's ID
+        productId, // ID of the product to add
+        quantity, // Quantity to add to the cart
+      });
+
+      if (response.status === 200) {
+        console.log(response.data.message);
+        alert("Product added to cart successfully!");
+      } else {
+        console.error("Failed to add product to cart:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+      alert(
+        "There was an error adding the product to your cart. Please try again."
+      );
+    }
+  };
+
   return (
     <div>
       {/* Header Section*/}
@@ -304,7 +326,10 @@ const Home = () => {
                       </div>
 
                       {/* Add to Cart Button */}
-                      <button className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 font-semibold">
+                      <button
+                        onClick={addToCart}
+                        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 font-semibold"
+                      >
                         Add to Cart
                       </button>
 
