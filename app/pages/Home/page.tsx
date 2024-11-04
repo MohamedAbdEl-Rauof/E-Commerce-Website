@@ -11,6 +11,7 @@ import { CiPhone } from "react-icons/ci";
 import Footer from "../../components/Footer/page";
 import Newsletter from "../../components/Newsletter/page";
 
+
 interface Image {
   url: string;
   alt?: string;
@@ -113,7 +114,7 @@ const Home = () => {
 
     // Calculate date 3 days ago
     const threeDaysAgo = new Date(today);
-    threeDaysAgo.setDate(today.getDate() - 3);
+    threeDaysAgo.setDate(today.getDate() - 10);
 
     // Return true if the product date is between threeDaysAgo and today (inclusive)
     return productDate >= threeDaysAgo;

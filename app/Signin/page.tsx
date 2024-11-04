@@ -27,9 +27,11 @@ const Signin = () => {
       }
 
       Swal.fire({
-        title: "Success!",
-        text: "Login successful",
+        position: "center",
         icon: "success",
+        title: "Login successful",
+        showConfirmButton: false,
+        timer: 1500,
       });
 
       // Fetch session to check role
