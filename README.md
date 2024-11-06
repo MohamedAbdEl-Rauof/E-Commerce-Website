@@ -42,5 +42,10 @@ password : admin123456
 
 
 user password 
-email : mohamedabdelrauooof112@gmail.com
+email : 142536789
 password : 142536789
+
+email : 123456789
+password : 123456789
+
+
