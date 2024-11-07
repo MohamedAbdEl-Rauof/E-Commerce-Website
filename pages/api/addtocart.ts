@@ -12,6 +12,13 @@ interface Cart {
   info: CartItem[];
 }
 
+interface Product {
+  _id: ObjectId;
+  name: string;
+  price: number;
+  image: string;
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const client = await clientPromise;
   const db = client.db("e-commerce");
@@ -31,6 +38,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     try {
       const cartCollection = db.collection<Cart>("cart");
+      const productsCollection = db.collection<Product>("products");
 
       // Find the cart document for the user in side cart table
       const cart = await cartCollection.findOne({
@@ -98,8 +106,60 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         .status(500)
         .json({ message: "An error occurred while adding to cart" });
     }
+  } else if (req.method === "GET") {
+    const { userId } = req.query;
+
+    if (!userId || !ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid or missing userId" });
+    }
+
+    try {
+      const cartCollection = db.collection<Cart>("cart");
+      const productsCollection = db.collection<Product>("products");
+
+      // Fetch the cart details for the user
+      const cart = await cartCollection.findOne({
+        userId: new ObjectId(userId as string),
+      });
+
+      if (!cart) {
+        return res
+          .status(404)
+          .json({ message: "Cart not found for this user" });
+      }
+
+      // Prepare the data to return
+      const cartItemsWithProductDetails = [];
+
+      for (const item of cart.info) {
+        // Fetch product details by productId
+        const product = await productsCollection.findOne({
+          _id: item.productId,
+        });
+
+        if (product) {
+          // Merge the cart item with product details
+          cartItemsWithProductDetails.push({
+            productId: item.productId,
+            quantity: item.quantity,
+            isFavourite: item.isFavourite,
+            productName: product.name,
+            productPrice: product.price,  
+            productImage: product.image,
+          });
+        }
+      }
+
+      // Respond with cart details and product information
+      res.status(200).json(cartItemsWithProductDetails);
+    } catch (error) {
+      console.error("Error fetching cart details:", error);
+      res
+        .status(500)
+        .json({ message: "An error occurred while fetching cart details" });
+    }
   } else {
-    res.setHeader("Allow", ["POST"]);
+    res.setHeader("Allow", ["POST", "GET"]);
     res.status(405).json({ message: `Method ${req.method} Not Allowed` });
   }
 };
