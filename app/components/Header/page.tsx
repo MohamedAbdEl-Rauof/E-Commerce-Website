@@ -56,64 +56,114 @@ const Header = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0)
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   // Access user ID directly from the session
   const userId = session?.user?.id;
 
   useEffect(() => {
     if (userId) {
-      const fetchCartDetails = async () => {
-        try {
-          const response = await fetch(`/api/addtocart?userId=${userId}`);
-          const data = await response.json();
-
-          if (response.ok && Array.isArray(data.cartItems)) {
-            const formattedData = data.cartItems.map((item: any) => ({
-              id: item.productId.toString(), // Convert ObjectId to string
-              image: item.productImage,
-              name: item.productName,
-              price: item.productPrice,
-              isFavourite: item.isFavourite,
-              quantity: item.quantity || 0,
-            }));
-
-            setCartItems(formattedData);
-          } else {
-            console.error("Error fetching cart details:", data.message);
-          }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        }
-      };
       fetchCartDetails();
     }
   }, [userId]);
 
+  const fetchCartDetails = async () => {
+    try {
+      const response = await fetch(`/api/addtocart?userId=${userId}`);
+      const data = await response.json();
 
+      if (response.ok && Array.isArray(data.cartItems)) {
+        const formattedData = data.cartItems.map((item: any) => ({
+          id: item.productId.toString(),
+          image: item.productImage,
+          name: item.productName,
+          price: item.productPrice,
+          isFavourite: item.isFavourite,
+          quantity: item.quantity || 0,
+        }));
+        setCartItems(formattedData);
+      } else {
+        console.error("Error fetching cart details:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+
+  // Function to trigger auto-save to the database after a delay
+  const autoSave = async () => {
+    if (userId) {
+      try {
+        // Loop through the cartItems array and send each item as a separate request
+        for (const item of cartItems) {
+          const response = await fetch("/api/addtocart", {
+            method: "PUT", // Use PUT to update the existing cart
+            body: JSON.stringify({
+              userId,
+              productId: item.id, // Map id to productId
+              quantity: item.quantity,
+              isFavourite: item.isFavourite,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            console.error("Error saving cart item:", await response.text());
+          }
+        }
+      } catch (error) {
+        console.error("Error during auto-save:", error);
+      }
+    }
+
+  };
 
   // Increment quantity for a specific product
   const increment = (productId: string) => {
     console.log("Incrementing item with id:", productId);
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
+    setCartItems((prevItems) => {
+      const updatedItems = prevItems.map((item) =>
         item.id === productId
-          ? { ...item, quantity: item.quantity + 1 } // Only change the specific item
-          : item // Leave other items unchanged
-      )
-    );
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+
+      // Clear any existing timeout before setting a new one
+      if (timeoutId) clearTimeout(timeoutId);
+
+      // Set a new timeout to trigger auto-save after 2 seconds of no changes
+      const newTimeoutId = setTimeout(() => autoSave(), 2000);
+      setTimeoutId(newTimeoutId);
+
+      return updatedItems;
+    });
   };
 
   // Decrement quantity for a specific product
   const decrement = (productId: string) => {
     console.log("Decrementing item with id:", productId);
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
+    setCartItems((prevItems) => {
+      const updatedItems = prevItems.map((item) =>
         item.id === productId && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 } // Only change the specific item
-          : item // Leave other items unchanged
-      )
-    );
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      );
+
+      // Clear any existing timeout before setting a new one
+      if (timeoutId) clearTimeout(timeoutId);
+
+      // Set a new timeout to trigger auto-save after 2 seconds of no changes
+      const newTimeoutId = setTimeout(() => autoSave(), 2000);
+      setTimeoutId(newTimeoutId);
+
+      return updatedItems;
+    });
   };
+
+
 
 
   const toggleDrawer =
@@ -144,16 +194,13 @@ const Header = () => {
           {cartItems.map((item) => (
             <Typography component="div" className="pl-4 pt-9 text-2xl" key={item.id}>
               <div className="relative flex items-center space-x-6 p-4 bg-gray-50 rounded-md shadow-md">
-                {/* Image Section */}
                 <div>
                   <img
-                    src={item.image || "default_image_path"} // replace with default image path if needed
+                    src={item.image || "default_image_path"}
                     alt="img"
                     className="w-16 h-16 object-cover rounded-md border border-gray-300"
                   />
                 </div>
-
-                {/* Counter and Description Section */}
                 <div className="flex flex-col flex-1 space-y-2">
                   <div className="flex justify-between items-center">
                     <p className="text-base font-semibold text-gray-800">{item.name || "Product"}</p>
@@ -162,26 +209,22 @@ const Header = () => {
                       <IoMdClose className="text-lg text-gray-600 cursor-pointer" />
                     </div>
                   </div>
-
-                  {/* Counter Section */}
                   <div className="flex items-center border border-gray-300 rounded-md bg-white w-20">
                     <button
-                      onClick={() => decrement(item.id)} // Pass item id for decrement
+                      onClick={() => decrement(item.id)}
                       className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-l-md"
                     >
                       -
                     </button>
                     <span className="text-base font-medium text-gray-800">{item.quantity}</span>
                     <button
-                      onClick={() => increment(item.id)} // Pass item id for increment
+                      onClick={() => increment(item.id)}
                       className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md"
                     >
                       +
                     </button>
                   </div>
                 </div>
-
-                {/* Heart icon */}
                 <div className="absolute top-3 right-20 p-2 text-right text-base flex flex-col items-end">
                   {item.isFavourite ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
                 </div>
