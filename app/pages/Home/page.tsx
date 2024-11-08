@@ -131,7 +131,7 @@ const Home = () => {
 
     // Calculate date 3 days ago
     const threeDaysAgo = new Date(today);
-    threeDaysAgo.setDate(today.getDate() - 10);
+    threeDaysAgo.setDate(today.getDate() - 30);
 
     // Return true if the product date is between threeDaysAgo and today (inclusive)
     return productDate >= threeDaysAgo;

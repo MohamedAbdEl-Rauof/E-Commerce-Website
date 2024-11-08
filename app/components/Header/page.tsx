@@ -26,10 +26,12 @@ import Badge from "@mui/material/Badge";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 interface Product {
+  id: string;
   image: string;
   name: string;
   price: number;
   isFavourite: boolean;
+  quantity: number;
 }
 
 type Anchor = "right";
@@ -46,62 +48,74 @@ const ROUTES: Record<NavItem, string> = {
   "Contact Us": "/pages/ContactUs",
 };
 
-const Header = ({
-  userId,
-  productId,
-}: {
-  userId: string;
-  productId: string;
-}) => {
+const Header = () => {
   const router = useRouter();
   const { data: session } = useSession();
   const [activeItem, setActiveItem] = useState<NavItem>("Home");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [product, setProduct] = useState<Product | null>(null);
-  const [count, setCount] = useState<number>(1);
+  const [cartItems, setCartItems] = useState<Product[]>([]);
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0)
+
+  // Access user ID directly from the session
+  const userId = session?.user?.id;
 
   useEffect(() => {
-    const fetchProductDetails = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:3000/api/addtocart?userId=${userId}&productId=${productId}`
-        );
-        const data = await response.json();
-        
-        if (response.ok) {
-          setProduct({
-            image: data.image,
-            name: data.name,
-            price: data.price,
-            isFavourite: data.isFavourite,
-          });
-        } else {
-          console.error("Error fetching product details:", data.message);
+    if (userId) {
+      const fetchCartDetails = async () => {
+        try {
+          const response = await fetch(`/api/addtocart?userId=${userId}`);
+          const data = await response.json();
+
+          if (response.ok && Array.isArray(data.cartItems)) {
+            const formattedData = data.cartItems.map((item: any) => ({
+              id: item.productId.toString(), // Convert ObjectId to string
+              image: item.productImage,
+              name: item.productName,
+              price: item.productPrice,
+              isFavourite: item.isFavourite,
+              quantity: item.quantity || 0,
+            }));
+
+            setCartItems(formattedData);
+          } else {
+            console.error("Error fetching cart details:", data.message);
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchProductDetails();
-  }, [userId, productId]);
-
-  const increment = () => {
-    setCount((prevCount) => prevCount + 1);
-  };
-
-  const decrement = () => {
-    if (count > 1) {
-      setCount((prevCount) => prevCount - 1);
+      };
+      fetchCartDetails();
     }
+  }, [userId]);
+
+
+
+  // Increment quantity for a specific product
+  const increment = (productId: string) => {
+    console.log("Incrementing item with id:", productId);
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === productId
+          ? { ...item, quantity: item.quantity + 1 } // Only change the specific item
+          : item // Leave other items unchanged
+      )
+    );
   };
 
-  if (!product) {
-    return <div>Loading...</div>;
-  }
+  // Decrement quantity for a specific product
+  const decrement = (productId: string) => {
+    console.log("Decrementing item with id:", productId);
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === productId && item.quantity > 1
+          ? { ...item, quantity: item.quantity - 1 } // Only change the specific item
+          : item // Leave other items unchanged
+      )
+    );
+  };
 
-  
+
   const toggleDrawer =
     (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
       if (
@@ -123,17 +137,17 @@ const Header = ({
       onKeyDown={() => toggleDrawer(false)}
     >
       <List>
-        {[""].map((text) => (
-          <ListItem key={text} disablePadding className="block">
-            <Typography component="div" className="pl-4 pt-3 text-2xl">
-              Cart
-            </Typography>
-            <Typography component="div" className="pl-4 pt-9 text-2xl">
+        <ListItem disablePadding className="block">
+          <Typography component="div" className="pl-4 pt-3 text-2xl">
+            Cart
+          </Typography>
+          {cartItems.map((item) => (
+            <Typography component="div" className="pl-4 pt-9 text-2xl" key={item.id}>
               <div className="relative flex items-center space-x-6 p-4 bg-gray-50 rounded-md shadow-md">
                 {/* Image Section */}
                 <div>
                   <img
-                    src="path_to_image"
+                    src={item.image || "default_image_path"} // replace with default image path if needed
                     alt="img"
                     className="w-16 h-16 object-cover rounded-md border border-gray-300"
                   />
@@ -142,12 +156,9 @@ const Header = ({
                 {/* Counter and Description Section */}
                 <div className="flex flex-col flex-1 space-y-2">
                   <div className="flex justify-between items-center">
-                    <p className="text-base font-semibold text-gray-800">
-                      Product
-                    </p>
-                    {/* Top Right - Price and Close Section */}
+                    <p className="text-base font-semibold text-gray-800">{item.name || "Product"}</p>
                     <div className="absolute top-2 right-0 p-2 text-right text-base flex flex-col items-end">
-                      <p className="text-gray-800 font-semibold">$19.19</p>
+                      <p className="text-gray-800 font-semibold">${item.price || "0.00"}</p>
                       <IoMdClose className="text-lg text-gray-600 cursor-pointer" />
                     </div>
                   </div>
@@ -155,31 +166,29 @@ const Header = ({
                   {/* Counter Section */}
                   <div className="flex items-center border border-gray-300 rounded-md bg-white w-20">
                     <button
-                      onClick={decrement}
+                      onClick={() => decrement(item.id)} // Pass item id for decrement
                       className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-l-md"
                     >
                       -
                     </button>
-                    <span className="text-base font-medium text-gray-800">
-                      {count}
-                    </span>
+                    <span className="text-base font-medium text-gray-800">{item.quantity}</span>
                     <button
-                      onClick={increment}
+                      onClick={() => increment(item.id)} // Pass item id for increment
                       className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md"
                     >
                       +
                     </button>
                   </div>
                 </div>
-                {/* Hear icon */}
+
+                {/* Heart icon */}
                 <div className="absolute top-3 right-20 p-2 text-right text-base flex flex-col items-end">
-                  <FaHeart className="text-red-500" />
-                  <FaRegHeart />
+                  {item.isFavourite ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
                 </div>
               </div>
             </Typography>
-          </ListItem>
-        ))}
+          ))}
+        </ListItem>
       </List>
     </Box>
   );
@@ -292,7 +301,7 @@ const Header = ({
               key={item}
               onClick={() => handleItemClick(item)}
               className={`cursor-pointer transition-colors duration-200 hover:text-black md:text-base
-                                ${activeItem === item ? "text-black font-medium" : ""}`}
+              ${activeItem === item ? "text-black font-medium" : ""}`}
             >
               {item}
             </li>
@@ -369,7 +378,7 @@ const Header = ({
 
         <div>
           <Button onClick={toggleDrawer(true)} className="text-black">
-            <Badge badgeContent={3} color="primary">
+            <Badge badgeContent={totalItems} color="primary">
               <IoCartOutline className="cursor-pointer text-2xl hover:text-gray-800 transition-colors duration-200" />
             </Badge>
           </Button>

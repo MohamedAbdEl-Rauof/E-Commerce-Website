@@ -1,3 +1,4 @@
+// api / addtocart 
 import { ObjectId } from "mongodb";
 import { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "../../lib/mongodb";
@@ -109,7 +110,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   } else if (req.method === "GET") {
     const { userId } = req.query;
 
-    if (!userId || !ObjectId.isValid(userId)) {
+    if (!userId || !ObjectId.isValid(userId as string)) {
       return res.status(400).json({ message: "Invalid or missing userId" });
     }
 
@@ -123,40 +124,35 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       });
 
       if (!cart) {
-        return res
-          .status(404)
-          .json({ message: "Cart not found for this user" });
+        return res.status(404).json({ message: "Cart not found for this user" });
       }
 
-      // Prepare the data to return
-      const cartItemsWithProductDetails = [];
+      // Prepare data to return with product details merged
+      const cartItemsWithProductDetails = await Promise.all(
+        cart.info.map(async (item) => {
+          const product = await productsCollection.findOne({ _id: item.productId });
 
-      for (const item of cart.info) {
-        // Fetch product details by productId
-        const product = await productsCollection.findOne({
-          _id: item.productId,
-        });
+          if (product) {
+            return {
+              productId: item.productId,
+              quantity: item.quantity,
+              isFavourite: item.isFavourite,
+              productName: product.name,
+              productPrice: product.price,
+              productImage: product.image,
+            };
+          } else {
+            return null; // Skip if product not found
+          }
+        })
+      );
 
-        if (product) {
-          // Merge the cart item with product details
-          cartItemsWithProductDetails.push({
-            productId: item.productId,
-            quantity: item.quantity,
-            isFavourite: item.isFavourite,
-            productName: product.name,
-            productPrice: product.price,  
-            productImage: product.image,
-          });
-        }
-      }
+      const validCartItems = cartItemsWithProductDetails.filter((item) => item !== null);
 
-      // Respond with cart details and product information
-      res.status(200).json(cartItemsWithProductDetails);
+      res.status(200).json({ cartItems: validCartItems });
     } catch (error) {
       console.error("Error fetching cart details:", error);
-      res
-        .status(500)
-        .json({ message: "An error occurred while fetching cart details" });
+      res.status(500).json({ message: "An error occurred while fetching cart details" });
     }
   } else {
     res.setHeader("Allow", ["POST", "GET"]);

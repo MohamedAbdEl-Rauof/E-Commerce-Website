@@ -49,3 +49,13 @@ email : 123456789
 password : 123456789
 
 
+
+
+>>>>>>>>>>>>>>>>>>> Problems >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+> the session stop quecikly 
+> the error in home page 
+> the shap of image files in public 
+> the required to refreash to load the api or  data , like add to cart , then refreash
+> the syntex of next files 
+> not forget handle new arraivel count function
+
