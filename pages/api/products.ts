@@ -11,6 +11,29 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       const { categoryId, priceRange } = req.query;
 
+      // Create a new product object
+      const newProduct = {
+        name,
+        description,
+        price,
+        image,
+        categoryId,
+        createdAt: new Date(),
+        PriceBeforeDiscount
+      };
+      
+      const result = await db.collection("products").insertOne(newProduct); 
+
+      res.status(201).json({ message: "Product created", product: { id: result.insertedId, ...newProduct } });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Error creating product" });
+    }
+  }
+  // Handle GET request to fetch all products
+  else if (req.method === "GET") {
+    try {
+      const products = await db.collection("products").find().toArray(); 
       // Construct the filter query
       const filter: any = {};
 

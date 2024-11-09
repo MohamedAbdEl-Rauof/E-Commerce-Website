@@ -1,5 +1,6 @@
 import clientPromise from "../../lib/mongodb";
 import { NextApiRequest, NextApiResponse } from "next";
+import bcrypt from "bcrypt";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const client = await clientPromise;
@@ -7,20 +8,37 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   if (req.method === "POST") {
     try {
+      const { name, username, email, phone, password } = req.body;
 
-       const { name, username, email, phone, password } = req.body;
+      // Check if a user with the same email exists
+      const existingEmail = await db.collection("users").findOne({ email });
+      if (existingEmail) {
+        return res
+          .status(409)
+          .json({ error: "A user with this email already exists" });
+      }
 
-       const newUser = {
+      // Check if a user with the same phone number exists
+      const existingPhone = await db.collection("users").findOne({ phone });
+      if (existingPhone) {
+        return res
+          .status(409)
+          .json({ error: "A user with this phone number already exists" });
+      }
+
+      // Hash the password before storing it
+      const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+
+      // If no duplicates are found, proceed to create a new user
+      const newUser = {
         name,
         username,
         email,
         phone,
-        password,
+        password: hashedPassword, 
       };
 
-
       const result = await db.collection("users").insertOne(newUser);
-
 
       res
         .status(201)

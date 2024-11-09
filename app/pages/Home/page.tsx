@@ -10,6 +10,9 @@ import { CiLock } from "react-icons/ci";
 import { CiPhone } from "react-icons/ci";
 import Footer from "../../components/Footer/page";
 import Newsletter from "../../components/Newsletter/page";
+import { useSession } from "next-auth/react";
+import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 interface Image {
   url: string;
@@ -36,6 +39,19 @@ interface Article {
   name: string;
 }
 
+interface AddToCart {
+  userId: string;
+  productId: string;
+  quantity: number;
+  isFavourite: boolean;
+}
+
+interface Favourite {
+  userId: string;
+  productId: string;
+  isFavourite: boolean;
+}
+
 const Home = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,6 +61,8 @@ const Home = () => {
     new Array(products.length).fill(false)
   );
   const [articles, setArticles] = useState<Article[]>([]);
+  const { data: session } = useSession();
+  const router = useRouter();
 
   // Fetch images from the API
   useEffect(() => {
@@ -113,7 +131,7 @@ const Home = () => {
 
     // Calculate date 3 days ago
     const threeDaysAgo = new Date(today);
-    threeDaysAgo.setDate(today.getDate() - 3);
+    threeDaysAgo.setDate(today.getDate() - 30);
 
     // Return true if the product date is between threeDaysAgo and today (inclusive)
     return productDate >= threeDaysAgo;
@@ -151,13 +169,88 @@ const Home = () => {
         }
         const data = await response.json();
         setArticles(data);
-        console.log("Raouf", data[0].images[0]);
       } catch (error) {
         console.error("Error fetching product:", error);
       }
     };
     fetchArticle();
   }, []);
+
+  // add to cart and favourite
+  async function addToCart({
+    productId,
+    quantity,
+    isFavourite,
+    userId,
+  }: AddToCart) {
+    // Check if user is logged in
+    if (!userId) {
+      Swal.fire({
+        title: "Please Log In",
+        text: "You must be logged in to add products to your cart.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Go to Log In Page",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.push("/Signin");
+        }
+      });
+      return;
+    }
+
+    const response = await fetch("/api/addtocart", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId, productId, quantity, isFavourite }),
+    });
+
+    const data = await response.json();
+
+    // Handle different response statuses
+    if (response.status === 401 && data.redirect) {
+      Swal.fire({
+        title: "Please Log In",
+        text: data.message,
+        icon: "warning",
+        confirmButtonText: "Go to Login",
+        timer: 1500,
+      }).then(() => {
+        window.location.href = data.redirect;
+      });
+    } else if (response.ok) {
+      Swal.fire("Success", data.message, "success");
+    } else {
+      Swal.fire("Error", data.message || "Could not add to cart", "error");
+    }
+  }
+
+  // Handle add to cart click
+  const handleAddToCart = (
+    productId: string,
+    quantity: number,
+    isFavourite: boolean
+  ) => {
+    if (session && session.user) {
+      const userId = session.user.id; // Get user ID from session
+      addToCart({ productId, quantity, isFavourite, userId }); // Call the function with userId
+    } else {
+      Swal.fire({
+        title: "Please Log In",
+        text: "You need to be logged in to add to the cart.",
+        icon: "warning",
+        confirmButtonText: "Go to Login",
+      }).then(() => {
+        router.push("/Signin");
+      });
+    }
+  };
+
+  console.log(session);
 
   return (
     <div>
@@ -277,18 +370,19 @@ const Home = () => {
                         className="w-full h-52 object-cover rounded-md shadow-lg transition-transform duration-300 transform group-hover:scale-105"
                       />
 
-                      {/* Favorite Icon (Heart) */}
                       <div
-                        onClick={() =>
-                          setFavorite((prev) => {
-                            const newFav = [...prev];
-                            const index = products.findIndex(
-                              (product) => product._id === item._id
-                            );
-                            newFav[index] = !newFav[index];
-                            return newFav;
-                          })
-                        }
+                        onClick={() => {
+                          const index = products.findIndex(
+                            (product) => product._id === item._id
+                          );
+                          const newFav = [...favorite];
+                          newFav[index] = !newFav[index];
+
+                          setFavorite(newFav);
+
+                          const isFavourite = newFav[index];
+                          handleAddToCart(item._id, 0, isFavourite);
+                        }}
                         className="absolute top-4 right-4 text-2xl text-gray-500 cursor-pointer opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                       >
                         {favorite[
@@ -303,7 +397,10 @@ const Home = () => {
                       </div>
 
                       {/* Add to Cart Button */}
-                      <button className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 font-semibold">
+                      <button
+                        onClick={() => handleAddToCart(item._id, 1, false)}
+                        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 font-semibold"
+                      >
                         Add to Cart
                       </button>
 
