@@ -6,10 +6,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const client = await clientPromise;
   const db = client.db("e-commerce");
 
-  // Handle GET request to fetch products
-  if (req.method === "GET") {
+  // Handle POST request to create a new product
+  if (req.method === "POST") {
     try {
-      const { categoryId, priceRange } = req.query;
+      const { name, description, price, image, categoryId, PriceBeforeDiscount } = req.body;
+
+      // Check if required fields are provided
+      if (!name || !description || !price || !image || !categoryId || !PriceBeforeDiscount) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
 
       // Create a new product object
       const newProduct = {
@@ -21,8 +26,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         createdAt: new Date(),
         PriceBeforeDiscount
       };
-      
-      const result = await db.collection("products").insertOne(newProduct); 
+
+      const result = await db.collection("products").insertOne(newProduct);
 
       res.status(201).json({ message: "Product created", product: { id: result.insertedId, ...newProduct } });
     } catch (error) {
@@ -30,10 +35,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(500).json({ error: "Error creating product" });
     }
   }
-  // Handle GET request to fetch all products
+  // Handle GET request to fetch products
   else if (req.method === "GET") {
     try {
-      const products = await db.collection("products").find().toArray(); 
+      const { categoryId, priceRange } = req.query;
+
       // Construct the filter query
       const filter: any = {};
 
@@ -65,7 +71,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
   } else {
     // Handle methods not allowed
-    res.setHeader("Allow", ["GET"]);
+    res.setHeader("Allow", ["GET", "POST"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 };
