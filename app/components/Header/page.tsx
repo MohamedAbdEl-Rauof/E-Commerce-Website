@@ -24,6 +24,7 @@ import Swal from "sweetalert2";
 import Typography from "@mui/material/Typography";
 import Badge from "@mui/material/Badge";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
+import Link from "next/link";
 
 interface Product {
   id: string;
@@ -38,6 +39,7 @@ type CartItem = {
   id: string;
   quantity: number;
   isFavourite: boolean;
+  price: number;
 };
 
 // Navigation items constant
@@ -71,6 +73,7 @@ const Header = () => {
     }
   }, [userId]);
 
+  //fetch the data of cart
   const fetchCartDetails = async () => {
     try {
       const response = await fetch(`/api/addtocart?userId=${userId}`);
@@ -94,6 +97,7 @@ const Header = () => {
     }
   };
 
+  // save the delete / update the cart
   const saveChanges = async () => {
     if (changes.size === 0 || !userId) return;
     try {
@@ -123,6 +127,7 @@ const Header = () => {
     }
   };
 
+  // incremet the counter
   const increment = (productId: string) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
@@ -142,6 +147,7 @@ const Header = () => {
     });
   };
 
+  // decrement the counter
   const decrement = (productId: string) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
@@ -161,6 +167,7 @@ const Header = () => {
     });
   };
 
+  // change Favourite button 
   const toggleFavourite = async (productId: string) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
@@ -186,6 +193,7 @@ const Header = () => {
     });
   };
 
+  // delte item from DB 
   const deleteFromDatabase = async (productId: string) => {
     try {
       await fetch(`/api/addtocart`, {
@@ -199,7 +207,7 @@ const Header = () => {
     }
   };
 
-
+  // delte item from cart 
   const removeProductFromCart = async (productId: string) => {
     try {
       setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
@@ -234,6 +242,7 @@ const Header = () => {
       saveChanges();
     };
   }, []);
+
   const toggleDrawer =
     (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
       if (
@@ -246,6 +255,11 @@ const Header = () => {
 
       setIsOpen(open);
     };
+
+  // calcultaeSuptotal
+  const calcultaeSuptotal = (cartItems: CartItem[]) => {
+    return cartItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+  };
 
   const list = () => (
     <Box
@@ -324,7 +338,7 @@ const Header = () => {
             Subtotal
           </Typography>
           <Typography component="div" className="text-base">
-            $
+            $ {calcultaeSuptotal(cartItems).toFixed(2)}
           </Typography>
         </div>
 
@@ -333,7 +347,7 @@ const Header = () => {
             Total
           </Typography>
           <Typography component="div" className="text-base">
-            $
+            $ {calcultaeSuptotal(cartItems).toFixed(2)}
           </Typography>
         </div>
         <Button
@@ -345,13 +359,14 @@ const Header = () => {
           Checkout
         </Button>
         <div className="text-center mt-3">
-          <button className="text-black text-xs font-semibold">
-            <u className="text-black text-xs font-semibold text-center">View Cart</u>
-          </button>
+          <Link href="/pages/ViewCart" >
+            <button className="text-black text-xs font-semibold">
+              <u className="text-black text-xs font-semibold text-center">View Cart</u>
+            </button>
+          </Link>
         </div>
       </div>
     </Box>
-
   );
 
   const handleItemClick = (item: NavItem) => {
