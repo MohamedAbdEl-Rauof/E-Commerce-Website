@@ -58,4 +58,4 @@ password : 123456789
 > the required to refreash to load the api or  data , like add to cart , then refreash
 > the syntex of next files 
 > not forget handle new arraivel count function
-
+> must refreash to add product to cart

@@ -40,15 +40,13 @@ type CartItem = {
   isFavourite: boolean;
 };
 
-type Anchor = "right";
-
 // Navigation items constant
 const NAV_ITEMS = ["Home", "Shop", "Product", "Contact Us"] as const;
 type NavItem = (typeof NAV_ITEMS)[number];
 
 // Route mapping
 const ROUTES: Record<NavItem, string> = {
-  Home: "/pages/Home",
+  Home: "/",
   Shop: "/pages/Shop",
   Product: "/pages/Product",
   "Contact Us": "/pages/ContactUs",
@@ -163,7 +161,7 @@ const Header = () => {
     });
   };
 
-  const toggleFavourite = async (productId) => {
+  const toggleFavourite = async (productId: string) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
         item.id === productId
@@ -188,7 +186,7 @@ const Header = () => {
     });
   };
 
-  const deleteFromDatabase = async (productId) => {
+  const deleteFromDatabase = async (productId: string) => {
     try {
       await fetch(`/api/addtocart`, {
         method: "DELETE",
@@ -255,8 +253,9 @@ const Header = () => {
       role="presentation"
       onClick={() => toggleDrawer(false)}
       onKeyDown={() => toggleDrawer(false)}
+      className="flex flex-col h-full"
     >
-      <List>
+      <List className="flex-grow">
         <ListItem disablePadding className="block">
           <Typography component="div" className="pl-4 pt-3 text-2xl">
             Cart
@@ -317,7 +316,42 @@ const Header = () => {
             ))}
         </ListItem>
       </List>
+
+      {/* Footer at the bottom */}
+      <div className="mt-auto p-4">
+        <div className="p-3 flex justify-between">
+          <Typography component="div" className="text-base">
+            Subtotal
+          </Typography>
+          <Typography component="div" className="text-base">
+            $
+          </Typography>
+        </div>
+
+        <div className="p-3 flex justify-between">
+          <Typography component="div" className="font-bold text-base">
+            Total
+          </Typography>
+          <Typography component="div" className="text-base">
+            $
+          </Typography>
+        </div>
+        <Button
+          sx={{ width: "90%", mx: "5%" }}
+          variant="contained"
+          className="bg-black hover:bg-gray-800"
+          onClick={() => router.push("/Signin")}
+        >
+          Checkout
+        </Button>
+        <div className="text-center mt-3">
+          <button className="text-black text-xs font-semibold">
+            <u className="text-black text-xs font-semibold text-center">View Cart</u>
+          </button>
+        </div>
+      </div>
     </Box>
+
   );
 
   const handleItemClick = (item: NavItem) => {
