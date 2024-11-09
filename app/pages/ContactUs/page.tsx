@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import { useState } from "react";
 import Header from "../../components/Header/page";
 import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa";
@@ -10,9 +10,78 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { TextField, Button } from "@mui/material";
 import Footer from "../../components/Footer/page";
+import { LatLngExpression } from "leaflet";
+import emailjs from "@emailjs/browser";
+import Swal from "sweetalert2";
 
 const ContactUs = () => {
-  const position: [number, number] = [51.505, -0.09];
+  const position: LatLngExpression = [51.505, -0.09];
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
+  const sendEmail = (e) => {
+    e.preventDefault();
+
+    // Validation checks
+    if (!name || !email || !message) {
+      Swal.fire({
+        title: "Validation Error",
+        text: "Please fill in all fields.",
+        icon: "warning",
+      });
+      return;
+    }
+
+    // Email regex for basic validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Swal.fire({
+        title: "Invalid Email",
+        text: "Please enter a valid email address.",
+        icon: "warning",
+      });
+      return;
+    }
+
+    const templateParams = {
+      to_name: "3legant Website Owner", // Replace with the actual recipient's name
+      from_name: name, // The sender's name
+      from_email: email, // The sender's email
+      message: message, // The message content
+    };
+
+    emailjs
+      .send(
+        "service_epqgw1w", // Your service ID
+        "template_2fuqx7u", // Your template ID
+        templateParams, // Parameters to populate the template
+        "aDEejrGXwbo4CekBo" // Your user ID
+      )
+      .then(
+        (result) => {
+          console.log(result.text);
+          Swal.fire({
+            title: "Email sent successfully!",
+            text: "We will contact you soon.",
+            icon: "success",
+          });
+        },
+        (error) => {
+          console.log(error.text);
+          Swal.fire({
+            title: "Failed to send email",
+            text: "Please try again later.",
+            icon: "error",
+          });
+        }
+      );
+
+    // Reset the form fields
+    setName("");
+    setEmail("");
+    setMessage("");
+  };
 
   return (
     <div>
@@ -30,7 +99,7 @@ const ContactUs = () => {
         {/* Intro Section */}
         <div className="mt-10 md:mt-14">
           <div className="md:w-[70%] space-y-6 md:space-y-9">
-            <h1 className="font-bold text-3xl sm:text-5xl md:text-7xl">
+            <h1 className="font-bold text-xl sm:text-5xl md:text-2xl lg:text-4xl">
               We believe in sustainable decor. We’re passionate about life at
               home.
             </h1>
@@ -115,18 +184,26 @@ const ContactUs = () => {
           <div className="mt-20 flex flex-col md:flex-row space-y-10 md:space-y-0 md:space-x-10">
             {/* Contact Section */}
             <div className="flex-1">
-              <form className="flex flex-col gap-4">
+              <form onSubmit={sendEmail} className="flex flex-col gap-4">
                 <TextField
                   id="outlined-name"
                   label="Name"
                   variant="outlined"
                   fullWidth
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                  }}
                 />
                 <TextField
                   id="outlined-email"
                   label="Email"
                   variant="outlined"
                   fullWidth
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
                 />
                 <TextField
                   id="outlined-message"
@@ -135,10 +212,15 @@ const ContactUs = () => {
                   multiline
                   rows={4}
                   fullWidth
+                  value={message}
+                  onChange={(e) => {
+                    setMessage(e.target.value);
+                  }}
                 />
                 <Button
                   variant="contained"
                   className="!bg-black !text-white w-44 hover:bg-gray-800"
+                  type="submit"
                 >
                   Send Message
                 </Button>
@@ -152,11 +234,9 @@ const ContactUs = () => {
                 zoom={13}
                 scrollWheelZoom={false}
                 style={{ height: "400px", width: "100%" }}
+                attributionControl={true}
               >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <Marker position={position}>
                   <Popup>
                     A pretty CSS3 popup. <br /> Easily customizable.
