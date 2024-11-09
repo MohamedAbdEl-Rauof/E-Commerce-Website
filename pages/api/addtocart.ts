@@ -172,7 +172,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       );
 
       if (existingProductIndex !== -1) {
-        
+
         // If the product exists, update its quantity and favourite status
         await cartCollection.updateOne(
           { _id: cart._id },

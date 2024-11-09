@@ -34,6 +34,12 @@ interface Product {
   quantity: number;
 }
 
+type CartItem = {
+  id: string;
+  quantity: number;
+  isFavourite: boolean;
+};
+
 type Anchor = "right";
 
 // Navigation items constant
@@ -56,7 +62,7 @@ const Header = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0)
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
 
   // Access user ID directly from the session
   const userId = session?.user?.id;
@@ -90,81 +96,112 @@ const Header = () => {
     }
   };
 
+  // Function to batch save changes
+  const saveChanges = async () => {
+    if (changes.size === 0 || !userId) return; // Skip if no changes or no user ID
+    try {
+      // Send updates for each changed item
+      for (const [productId, item] of changes.entries()) {
+        const response = await fetch("/api/addtocart", {
+          method: "PUT",
+          body: JSON.stringify({
+            userId,
+            productId: item.id,
+            quantity: item.quantity,
+            isFavourite: item.isFavourite,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-  // Function to trigger auto-save to the database after a delay
-  const autoSave = async () => {
-    if (userId) {
-      try {
-        // Loop through the cartItems array and send each item as a separate request
-        for (const item of cartItems) {
-          const response = await fetch("/api/addtocart", {
-            method: "PUT", // Use PUT to update the existing cart
-            body: JSON.stringify({
-              userId,
-              productId: item.id, // Map id to productId
-              quantity: item.quantity,
-              isFavourite: item.isFavourite,
-            }),
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (!response.ok) {
-            console.error("Error saving cart item:", await response.text());
-          }
+        if (!response.ok) {
+          console.error("Error saving cart item:", await response.text());
         }
-      } catch (error) {
-        console.error("Error during auto-save:", error);
       }
-    }
 
+      // Clear changes after successful save
+      setChanges(new Map());
+    } catch (error) {
+      console.error("Error during auto-save:", error);
+    }
   };
 
-  // Increment quantity for a specific product
+  // Increment item quantity and mark for save
   const increment = (productId: string) => {
-    console.log("Incrementing item with id:", productId);
-    setCartItems((prevItems) => {
-      const updatedItems = prevItems.map((item) =>
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
         item.id === productId
           ? { ...item, quantity: item.quantity + 1 }
           : item
-      );
+      )
+    );
 
-      // Clear any existing timeout before setting a new one
-      if (timeoutId) clearTimeout(timeoutId);
-
-      // Set a new timeout to trigger auto-save after 2 seconds of no changes
-      const newTimeoutId = setTimeout(() => autoSave(), 2000);
-      setTimeoutId(newTimeoutId);
-
-      return updatedItems;
+    setChanges((prevChanges) => {
+      const newChanges = new Map(prevChanges);
+      const item = cartItems.find((item) => item.id === productId);
+      if (item) {
+        newChanges.set(productId, { ...item, quantity: item.quantity + 1 });
+      }
+      return newChanges;
     });
   };
 
-  // Decrement quantity for a specific product
+  // Decrement item quantity and mark for save
   const decrement = (productId: string) => {
-    console.log("Decrementing item with id:", productId);
-    setCartItems((prevItems) => {
-      const updatedItems = prevItems.map((item) =>
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
         item.id === productId && item.quantity > 1
           ? { ...item, quantity: item.quantity - 1 }
           : item
-      );
+      )
+    );
 
-      // Clear any existing timeout before setting a new one
-      if (timeoutId) clearTimeout(timeoutId);
-
-      // Set a new timeout to trigger auto-save after 2 seconds of no changes
-      const newTimeoutId = setTimeout(() => autoSave(), 2000);
-      setTimeoutId(newTimeoutId);
-
-      return updatedItems;
+    setChanges((prevChanges) => {
+      const newChanges = new Map(prevChanges);
+      const item = cartItems.find((item) => item.id === productId);
+      if (item && item.quantity > 1) {
+        newChanges.set(productId, { ...item, quantity: item.quantity - 1 });
+      }
+      return newChanges;
     });
   };
 
+  // Toggle favourite status and mark for save
+  const toggleFavourite = (productId: string) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === productId
+          ? { ...item, isFavourite: !item.isFavourite }
+          : item
+      )
+    );
 
+    setChanges((prevChanges) => {
+      const newChanges = new Map(prevChanges);
+      const item = cartItems.find((item) => item.id === productId);
+      if (item) {
+        newChanges.set(productId, { ...item, isFavourite: !item.isFavourite });
+      }
+      return newChanges;
+    });
+  };
 
+  // Periodically save changes every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      saveChanges();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [changes]);
+
+  // Optional: Save on component unmount to prevent data loss
+  useEffect(() => {
+    return () => {
+      saveChanges();
+    };
+  }, []);
 
   const toggleDrawer =
     (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
@@ -226,7 +263,16 @@ const Header = () => {
                   </div>
                 </div>
                 <div className="absolute top-3 right-20 p-2 text-right text-base flex flex-col items-end">
-                  {item.isFavourite ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
+                  <div
+                    onClick={() => toggleFavourite(item.id)}
+                    className="cursor-pointer"
+                  >
+                    {item.isFavourite ? (
+                      <FaHeart className="text-red-500" />
+                    ) : (
+                      <FaRegHeart />
+                    )}
+                  </div>
                 </div>
               </div>
             </Typography>
