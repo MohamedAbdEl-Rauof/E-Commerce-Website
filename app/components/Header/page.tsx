@@ -33,6 +33,7 @@ interface Product {
   price: number;
   isFavourite: boolean;
   quantity: number;
+  
 }
 
 type CartItem = {
