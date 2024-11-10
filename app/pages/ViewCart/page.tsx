@@ -11,6 +11,8 @@ import Header from "../../components/Header/page";
 import Step1 from "./Step1";
 import Step2 from "./Step2";
 import Step3 from "./Step3";
+import Footer from "../../components/Footer/page";
+
 
 const steps = ["Shopping Cart", "Checkout Details", "Order Complete"];
 
@@ -75,6 +77,9 @@ export default function ViewCart() {
             </Button>
           </Box>
         </Box>
+      </div>
+      <div className="mt-14">
+        <Footer />
       </div>
     </div>
   );

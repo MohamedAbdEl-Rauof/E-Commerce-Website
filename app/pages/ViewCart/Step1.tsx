@@ -69,7 +69,7 @@ const Step1 = () => {
   };
 
   return (
-    <div className="mt-10 flex justify-between w-auto mx-auto">
+    <div className="mt-10 mb-14 flex justify-between w-auto mx-auto">
       {/* Table Section */}
       <Box sx={{ flex: 1, marginRight: 4 }}>
         <TableContainer component={Paper} elevation={3}>
