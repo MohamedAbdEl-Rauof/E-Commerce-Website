@@ -59,3 +59,4 @@ password : 123456789
 > the syntex of next files 
 > not forget handle new arraivel count function
 > must refreash to add product to cart
+> responsive for all 
