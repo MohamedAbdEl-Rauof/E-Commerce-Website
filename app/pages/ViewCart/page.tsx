@@ -12,6 +12,7 @@ import Step1 from "./Step1";
 import Step2 from "./Step2";
 import Step3 from "./Step3";
 import Footer from "../../components/Footer/page";
+import { useCart } from "../CartContext/page";
 
 
 const steps = ["Shopping Cart", "Checkout Details", "Order Complete"];
@@ -19,6 +20,7 @@ const steps = ["Shopping Cart", "Checkout Details", "Order Complete"];
 export default function ViewCart() {
   const [activeStep, setActiveStep] = useState(0);
   const [completed, setCompleted] = useState<{ [index: number]: boolean }>({});
+  const { cartItems } = useCart();
 
   const handleNext = () => {
     // Mark current step as completed
@@ -37,11 +39,11 @@ export default function ViewCart() {
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
-        return <Step1 />;
+        return <Step1 cartItems={cartItems} />;
       case 1:
-        return <Step2 />;
+        return <Step2 cartItems={cartItems} />;
       case 2:
-        return <Step3 />;
+        return <Step3 cartItems={cartItems} />;
       default:
         return null;
     }

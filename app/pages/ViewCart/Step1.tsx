@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -18,54 +18,55 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { IoCloseOutline } from "react-icons/io5";
 
-function createData(
-  imageUrl: string,
-  name: string,
-  quantity: string,
-  price: string,
-  subtotal: string,
-  remove: string
-) {
-  return { imageUrl, name, remove, quantity, price, subtotal };
+interface CartItem {
+  id: string;
+  image: string;
+  name: string;
+  price: number;
+  isFavourite: boolean;
+  quantity: number;
+}
+
+interface StepProps {
+  cartItems: CartItem[];
 }
 
 const label = { inputProps: { "aria-label": "check circle" } };
 
-const rows = [
-  {
-    imageUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-C_UAhXq9GfuGO452EEzfbKnh1viQB9EDBQ&s",
-    name: "Product 1",
-    remove: "Remove",
-    quantity: 2,
-    price: "$19.00",
-    subtotal: "$38.00",
-  },
-  {
-    imageUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-C_UAhXq9GfuGO452EEzfbKnh1viQB9EDBQ&s",
-    name: "Product 2",
-    remove: "Remove",
-    quantity: 1,
-    price: "$19.00",
-    subtotal: "$19.00",
-  },
-  {
-    imageUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-C_UAhXq9GfuGO452EEzfbKnh1viQB9EDBQ&s",
-    name: "Product 3",
-    remove: "Remove",
-    quantity: 5,
-    price: "$19.00",
-    subtotal: "$95.00",
-  },
-];
+const Step1: React.FC<StepProps> = ({ cartItems }) => {
+  const [selectedShipping, setSelectedShipping] = useState<number>(1);
+  const [total, setTotal] = useState<number>(0);
 
-const Step1 = () => {
-  const [selectedShipping, setSelectedShipping] = useState<number | null>(1);
+  // Calculate Subtotal
+  const calcultaeSuptotal = (cartItems: CartItem[]) => {
+    return cartItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+  };
+
+  // Initialize the total with Free Shipping (which is 0)
+  useEffect(() => {
+    const subtotal = calcultaeSuptotal(cartItems);
+    const shippingCost = 0;  
+    setTotal(subtotal + shippingCost);
+
+    // Select Free Shipping by default
+    handleSelectShipping(1);
+  }, [cartItems]);  // Re-run when cartItems change
 
   const handleSelectShipping = (optionId: number) => {
     setSelectedShipping(optionId);
+
+    let shippingCost = 0;
+    const subtotal = calcultaeSuptotal(cartItems);
+
+    if (optionId === 1) { // Free Shipping
+      shippingCost = 0; 
+    } else if (optionId === 2) { // Express Shipping
+      shippingCost = 15.00; 
+    } else if (optionId === 3) { // Pickup
+      shippingCost = -(subtotal * 0.21); 
+    }
+    const newTotal = subtotal + shippingCost;
+    setTotal(newTotal);
   };
 
   return (
@@ -100,8 +101,8 @@ const Step1 = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.name}>
+              {cartItems.map((cartItem) => (
+                <TableRow key={cartItem.id}>
                   <TableCell
                     component="th"
                     scope="row"
@@ -109,8 +110,8 @@ const Step1 = () => {
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       <img
-                        src={row.imageUrl}
-                        alt={row.name}
+                        src={cartItem.image}
+                        alt={cartItem.name}
                         style={{
                           width: 50,
                           height: 50,
@@ -119,7 +120,7 @@ const Step1 = () => {
                         }}
                       />
                       <div>
-                        <div className="font-semibold">{row.name}</div>
+                        <div className="font-semibold">{cartItem.name}</div>
                         <Box
                           sx={{
                             display: "flex",
@@ -135,7 +136,7 @@ const Step1 = () => {
                             }}
                             onClick={() => alert("Remove item")}
                           />
-                          <span>{row.remove}</span>
+                          <span>Remove</span>
                         </Box>
                       </div>
                     </Box>
@@ -146,7 +147,7 @@ const Step1 = () => {
                         -
                       </button>
                       <span className="text-base font-medium text-gray-800">
-                        {row.quantity}
+                        {cartItem.quantity}
                       </span>
                       <button className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md">
                         +
@@ -154,10 +155,10 @@ const Step1 = () => {
                     </div>
                   </TableCell>
                   <TableCell align="right" sx={{ padding: "16px" }}>
-                    {row.price}
+                    {cartItem.price}
                   </TableCell>
                   <TableCell align="right" sx={{ padding: "16px" }}>
-                    {row.subtotal}
+                    {cartItem.price * cartItem.quantity}
                   </TableCell>
                 </TableRow>
               ))}
@@ -242,7 +243,7 @@ const Step1 = () => {
               }}
             >
               <ListItemText primary="Pickup" />
-              <ListItemText primary="- $21.00" sx={{ textAlign: "right" }} />
+              <ListItemText primary="- %21.00" sx={{ textAlign: "right" }} />
             </Box>
           </ListItemButton>
         </Box>
@@ -250,7 +251,7 @@ const Step1 = () => {
         {/* Summary */}
         <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
           <Typography variant="subtitle1">Subtotal</Typography>
-          <Typography variant="subtitle1">$123.00</Typography>
+          <Typography variant="subtitle1">{calcultaeSuptotal(cartItems).toFixed(2)}</Typography>
         </Box>
 
         <Box
@@ -262,7 +263,7 @@ const Step1 = () => {
           }}
         >
           <Typography variant="h6">Total</Typography>
-          <Typography variant="h6">$123.00</Typography>
+          <Typography variant="h6">${total.toFixed(2)}</Typography> {/* Display the total correctly */}
         </Box>
 
         <Button variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>

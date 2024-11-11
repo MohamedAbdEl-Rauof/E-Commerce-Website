@@ -1,3 +1,4 @@
+// components/Header / page.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { CiSearch } from "react-icons/ci";
@@ -25,6 +26,7 @@ import Typography from "@mui/material/Typography";
 import Badge from "@mui/material/Badge";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import Link from "next/link";
+import { useCart } from "../../pages/CartContext/page";    // Context Api
 
 interface Product {
   id: string;
@@ -61,7 +63,7 @@ const Header = () => {
   const [activeItem, setActiveItem] = useState<NavItem>("Home");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [cartItems, setCartItems] = useState<Product[]>([]);
+  const { cartItems, setCartItems } = useCart();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0)
   const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
 
