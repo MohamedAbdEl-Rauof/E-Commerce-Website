@@ -17,6 +17,8 @@ import {
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { IoCloseOutline } from "react-icons/io5";
+import { useSession } from "next-auth/react";
+import Swal from "sweetalert2";
 
 interface CartItem {
   id: string;
@@ -29,44 +31,145 @@ interface CartItem {
 
 interface StepProps {
   cartItems: CartItem[];
+  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  handleCheckout: () => void;  
+  
 }
 
 const label = { inputProps: { "aria-label": "check circle" } };
 
-const Step1: React.FC<StepProps> = ({ cartItems }) => {
+const Step1: React.FC<StepProps> = ({ cartItems, setCartItems,handleCheckout }) => {
   const [selectedShipping, setSelectedShipping] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
+  const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
   // Calculate Subtotal
-  const calcultaeSuptotal = (cartItems: CartItem[]) => {
-    return cartItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+  const calculateSubtotal = (cartItems: CartItem[]) => {
+    return cartItems.reduce((acc, item) => acc + item.quantity * item.price, 0);
   };
-
-  // Initialize the total with Free Shipping (which is 0)
-  useEffect(() => {
-    const subtotal = calcultaeSuptotal(cartItems);
-    const shippingCost = 0;  
-    setTotal(subtotal + shippingCost);
-
-    // Select Free Shipping by default
-    handleSelectShipping(1);
-  }, [cartItems]);  // Re-run when cartItems change
 
   const handleSelectShipping = (optionId: number) => {
     setSelectedShipping(optionId);
+  };
 
+  // Update total on cartItems or selectedShipping change
+  useEffect(() => {
+    const subtotal = calculateSubtotal(cartItems);
     let shippingCost = 0;
-    const subtotal = calcultaeSuptotal(cartItems);
 
-    if (optionId === 1) { // Free Shipping
-      shippingCost = 0; 
-    } else if (optionId === 2) { // Express Shipping
-      shippingCost = 15.00; 
-    } else if (optionId === 3) { // Pickup
-      shippingCost = -(subtotal * 0.21); 
+    if (selectedShipping === 2) {
+      shippingCost = 15.0; // Express Shipping
+    } else if (selectedShipping === 3) {
+      shippingCost = -(subtotal * 0.21); // Pickup discount
     }
-    const newTotal = subtotal + shippingCost;
-    setTotal(newTotal);
+
+    setTotal(subtotal + shippingCost);
+  }, [cartItems, selectedShipping]);
+
+  const handleIncreaseQuantity = (id: string) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+      )
+    );
+
+    setChanges((prevChanges) => {
+      const newChanges = new Map(prevChanges);
+      const item = cartItems.find((item) => item.id === id);
+      if (item) {
+        newChanges.set(id, { ...item, quantity: item.quantity + 1 });
+      }
+      return newChanges;
+    });
+  };
+
+  const handleDecreaseQuantity = (id: string) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === id && item.quantity > 1
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+    );
+
+    setChanges((prevChanges) => {
+      const newChanges = new Map(prevChanges);
+      const item = cartItems.find((item) => item.id === id);
+      if (item && item.quantity > 1) {
+        newChanges.set(id, { ...item, quantity: item.quantity - 1 });
+      }
+      return newChanges;
+    });
+  };
+
+  // Save changes to the database
+  const saveChanges = async () => {
+    if (changes.size === 0) return;
+    try {
+      for (const [productId, item] of changes.entries()) {
+        await fetch("/api/addtocart", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            productId,
+            quantity: item.quantity,
+          }),
+        });
+      }
+      setChanges(new Map());
+    } catch (error) {
+      console.error("Error saving changes:", error);
+    }
+  };
+
+  // Auto-save every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      saveChanges();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [changes]);
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      saveChanges();
+    };
+  }, []);
+
+  // delte item from DB
+  const deleteProduct = async (productId: string) => {
+    try {
+      // Remove the product from the cart state
+      setCartItems((prevItems) =>
+        prevItems.filter((item) => item.id !== productId)
+      );
+
+      // Send DELETE request to remove the item from the database
+      await fetch("/api/addtocart", {
+        method: "DELETE",
+        body: JSON.stringify({ userId, productId }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      // Show a success notification
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Deleted Done",
+        showConfirmButton: false,
+        timer: 1000,
+      });
+      console.log(
+        "Item deleted from database and removed from cart successfully"
+      );
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
   };
 
   return (
@@ -134,7 +237,7 @@ const Step1: React.FC<StepProps> = ({ cartItems }) => {
                               cursor: "pointer",
                               marginLeft: 8,
                             }}
-                            onClick={() => alert("Remove item")}
+                            onClick={() => deleteProduct(cartItem.id)}
                           />
                           <span>Remove</span>
                         </Box>
@@ -143,13 +246,19 @@ const Step1: React.FC<StepProps> = ({ cartItems }) => {
                   </TableCell>
                   <TableCell align="center" sx={{ padding: "16px" }}>
                     <div className="flex items-center justify-center border border-gray-300 rounded-md bg-white w-20">
-                      <button className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-l-md">
+                      <button
+                        onClick={() => handleDecreaseQuantity(cartItem.id)}
+                        className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-l-md"
+                      >
                         -
                       </button>
                       <span className="text-base font-medium text-gray-800">
                         {cartItem.quantity}
                       </span>
-                      <button className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md">
+                      <button
+                        onClick={() => handleIncreaseQuantity(cartItem.id)}
+                        className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md"
+                      >
                         +
                       </button>
                     </div>
@@ -251,7 +360,9 @@ const Step1: React.FC<StepProps> = ({ cartItems }) => {
         {/* Summary */}
         <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
           <Typography variant="subtitle1">Subtotal</Typography>
-          <Typography variant="subtitle1">{calcultaeSuptotal(cartItems).toFixed(2)}</Typography>
+          <Typography variant="subtitle1">
+            {calculateSubtotal(cartItems).toFixed(2)}
+          </Typography>
         </Box>
 
         <Box
@@ -263,10 +374,17 @@ const Step1: React.FC<StepProps> = ({ cartItems }) => {
           }}
         >
           <Typography variant="h6">Total</Typography>
-          <Typography variant="h6">${total.toFixed(2)}</Typography> {/* Display the total correctly */}
+          <Typography variant="h6">${total.toFixed(2)}</Typography>{" "}
+          {/* Display the total correctly */}
         </Box>
 
-        <Button variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          sx={{ mt: 3 }}
+          onClick={handleCheckout} 
+        >
           Checkout
         </Button>
       </Box>

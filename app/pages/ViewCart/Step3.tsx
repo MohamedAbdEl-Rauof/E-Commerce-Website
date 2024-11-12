@@ -14,9 +14,10 @@ interface CartItem {
 
 interface StepProps {
   cartItems: CartItem[];
+  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
 }
 
-const Step3: React.FC<StepProps> = ({ cartItems }) => {
+const Step3: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
   return (
     <div className="mx-auto mt-24 mb-14 text-center max-w-7xl px-4">
       {/* Container for the thank you message and order info */}
@@ -24,7 +25,9 @@ const Step3: React.FC<StepProps> = ({ cartItems }) => {
         {/* Thank You message */}
         <div className="mb-8">
           <p className="text-gray-500 text-xl">Thank You! 🎉</p>
-          <h1 className="text-3xl font-bold text-gray-800">Your order has been received</h1>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Your order has been received
+          </h1>
         </div>
 
         {/* Order Badge (with image) */}
@@ -49,7 +52,9 @@ const Step3: React.FC<StepProps> = ({ cartItems }) => {
           </div>
           <div className="text-left">
             <h1 className="text-xl font-semibold text-gray-800">#4533-543</h1>
-            <h1 className="text-xl font-semibold text-gray-800">October 19, 2023</h1>
+            <h1 className="text-xl font-semibold text-gray-800">
+              October 19, 2023
+            </h1>
             <h1 className="text-xl font-semibold text-gray-800">$1,345</h1>
             <h1 className="text-xl font-semibold text-gray-800">Credit Card</h1>
           </div>

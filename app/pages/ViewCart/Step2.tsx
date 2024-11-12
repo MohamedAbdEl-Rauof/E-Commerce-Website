@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
-import { ListItemButton, ListItemText, TextField, Typography } from "@mui/material";
+import {
+  ListItemButton,
+  ListItemText,
+  TextField,
+  Typography,
+} from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { CiCreditCard1 } from "react-icons/ci";
 import { Button } from "flowbite-react";
+import { useSession } from "next-auth/react";
 
 interface CartItem {
   id: string;
@@ -18,22 +24,105 @@ interface CartItem {
 
 interface StepProps {
   cartItems: CartItem[];
+  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
 }
 
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
-const Step2: React.FC<StepProps> = ({ cartItems }) => {
+const Step2: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>("");
+  const [selectedShipping, setSelectedShipping] = useState<number>(1);
+  const [total, setTotal] = useState<number>(0);
+  const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+
 
   const handleSelect = (option: string) => {
     setSelectedOption(option);
+  };
+
+  const handleIncreaseQuantity = (id: string) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+      )
+    );
+
+    setChanges((prevChanges) => {
+      const newChanges = new Map(prevChanges);
+      const item = cartItems.find((item) => item.id === id);
+      if (item) {
+        newChanges.set(id, { ...item, quantity: item.quantity + 1 });
+      }
+      return newChanges;
+    });
+  };
+
+  const handleDecreaseQuantity = (id: string) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === id && item.quantity > 1
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+    );
+
+    setChanges((prevChanges) => {
+      const newChanges = new Map(prevChanges);
+      const item = cartItems.find((item) => item.id === id);
+      if (item && item.quantity > 1) {
+        newChanges.set(id, { ...item, quantity: item.quantity - 1 });
+      }
+      return newChanges;
+    });
+  };
+
+  // Save changes to the database
+  const saveChanges = async () => {
+    if (changes.size === 0) return;
+    try {
+      for (const [productId, item] of changes.entries()) {
+        await fetch("/api/addtocart", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            productId,
+            quantity: item.quantity,
+          }),
+        });
+      }
+      setChanges(new Map());
+    } catch (error) {
+      console.error("Error saving changes:", error);
+    }
+  };
+
+  // Auto-save every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      saveChanges();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [changes]);
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      saveChanges();
+    };
+  }, []);
+
+  const calculateSubtotal = (cartItems: CartItem[]) => {
+    return cartItems.reduce((acc, item) => acc + item.quantity * item.price, 0);
   };
 
   return (
     <div className=" mx-auto mt-24 mb-14">
       {/* Main container with flex layout */}
       <Box display="flex" gap={4} flexDirection={{ xs: "column", md: "row" }}>
-
         {/* Left Column: Contact Information, Shipping Address, Payment Method */}
         <Box flex="1" display="flex" flexDirection="column" gap={4}>
           {/* Contact Information */}
@@ -50,13 +139,38 @@ const Step2: React.FC<StepProps> = ({ cartItems }) => {
               Contact Information
             </Typography>
             <Box sx={{ mt: 4 }}>
-              <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} gap={2} mb={3}>
-                <TextField fullWidth id="first-name" label="First Name" variant="outlined" />
-                <TextField fullWidth id="last-name" label="Last Name" variant="outlined" />
+              <Box
+                display="flex"
+                flexDirection={{ xs: "column", sm: "row" }}
+                gap={2}
+                mb={3}
+              >
+                <TextField
+                  fullWidth
+                  id="first-name"
+                  label="First Name"
+                  variant="outlined"
+                />
+                <TextField
+                  fullWidth
+                  id="last-name"
+                  label="Last Name"
+                  variant="outlined"
+                />
               </Box>
               <Box display="flex" flexDirection="column" gap={2}>
-                <TextField fullWidth id="phone-number" label="Phone Number" variant="outlined" />
-                <TextField fullWidth id="email-address" label="Email Address" variant="outlined" />
+                <TextField
+                  fullWidth
+                  id="phone-number"
+                  label="Phone Number"
+                  variant="outlined"
+                />
+                <TextField
+                  fullWidth
+                  id="email-address"
+                  label="Email Address"
+                  variant="outlined"
+                />
               </Box>
             </Box>
           </Box>
@@ -75,12 +189,44 @@ const Step2: React.FC<StepProps> = ({ cartItems }) => {
               Shipping Address
             </Typography>
             <Box sx={{ mt: 4 }}>
-              <TextField fullWidth id="street-address" label="Street Address" variant="outlined" />
-              <TextField fullWidth id="country" label="Country" variant="outlined" sx={{ mt: 2 }} />
-              <TextField fullWidth id="city" label="Town / City" variant="outlined" sx={{ mt: 2 }} />
-              <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} gap={2} mt={2}>
-                <TextField fullWidth id="state" label="State" variant="outlined" />
-                <TextField fullWidth id="zip-code" label="Zip Code" variant="outlined" />
+              <TextField
+                fullWidth
+                id="street-address"
+                label="Street Address"
+                variant="outlined"
+              />
+              <TextField
+                fullWidth
+                id="country"
+                label="Country"
+                variant="outlined"
+                sx={{ mt: 2 }}
+              />
+              <TextField
+                fullWidth
+                id="city"
+                label="Town / City"
+                variant="outlined"
+                sx={{ mt: 2 }}
+              />
+              <Box
+                display="flex"
+                flexDirection={{ xs: "column", sm: "row" }}
+                gap={2}
+                mt={2}
+              >
+                <TextField
+                  fullWidth
+                  id="state"
+                  label="State"
+                  variant="outlined"
+                />
+                <TextField
+                  fullWidth
+                  id="zip-code"
+                  label="Zip Code"
+                  variant="outlined"
+                />
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
                 <Checkbox {...label} />
@@ -119,7 +265,13 @@ const Step2: React.FC<StepProps> = ({ cartItems }) => {
                   checkedIcon={<CheckCircleIcon />}
                   checked={selectedOption === "credit-card"}
                 />
-                <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                  }}
+                >
                   <ListItemText primary="Pay By Card Credit" />
                   <CiCreditCard1 style={{ fontSize: 24 }} />
                 </Box>
@@ -143,9 +295,24 @@ const Step2: React.FC<StepProps> = ({ cartItems }) => {
               </ListItemButton>
             </Box>
             <Box sx={{ mt: 2 }}>
-              <TextField fullWidth id="card-number" label="Card Number" variant="outlined" />
-              <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} gap={2} mt={2}>
-                <TextField fullWidth id="expiration-date" label="Expiration Date" variant="outlined" />
+              <TextField
+                fullWidth
+                id="card-number"
+                label="Card Number"
+                variant="outlined"
+              />
+              <Box
+                display="flex"
+                flexDirection={{ xs: "column", sm: "row" }}
+                gap={2}
+                mt={2}
+              >
+                <TextField
+                  fullWidth
+                  id="expiration-date"
+                  label="Expiration Date"
+                  variant="outlined"
+                />
                 <TextField fullWidth id="cvc" label="CVC" variant="outlined" />
               </Box>
             </Box>
@@ -155,7 +322,7 @@ const Step2: React.FC<StepProps> = ({ cartItems }) => {
           </Button>
         </Box>
 
-        {/* Right Column: Cart */}
+        {/* Order Summary */}
         <Box flex="1" maxWidth={600}>
           <Box
             sx={{
@@ -170,26 +337,51 @@ const Step2: React.FC<StepProps> = ({ cartItems }) => {
               Order Summary
             </Typography>
             {/* Cart Items */}
-            <Box className="relative flex items-center space-x-6 p-4 bg-gray-50 rounded-md shadow-md">
-              <img
-                src="default_image_path"
-                alt="img"
-                className="w-16 h-16 object-cover rounded-md border border-gray-300"
-              />
-              <Box className="flex flex-col flex-1 space-y-2">
-                <Typography variant="body1" className="text-base font-semibold text-gray-800">
-                  Product Name
-                </Typography>
-                <Box className="flex items-center border border-gray-300 rounded-md bg-white w-20">
-                  <button className="text-lg font-bold text-gray-700 px-3 py-1 rounded-l-md">-</button>
-                  <span className="text-base font-medium text-gray-800">1</span>
-                  <button className="text-lg font-bold text-gray-700 px-3 py-1 rounded-r-md">+</button>
+            {cartItems.map((cartItem) => (
+              <Box
+                key={cartItem.id}
+                className="relative flex items-center space-x-6 p-4 bg-gray-50 rounded-md shadow-md"
+              >
+                <img
+                  src={cartItem.image}
+                  alt="img"
+                  className="w-16 h-16 object-cover rounded-md border border-gray-300"
+                />
+                <Box className="flex flex-col flex-1 space-y-2">
+                  <Typography
+                    variant="body1"
+                    className="text-base font-semibold text-gray-800"
+                  >
+                    Product Name
+                  </Typography>
+                  <Box className="flex items-center border border-gray-300 rounded-md bg-white w-20">
+                    <div className="flex items-center justify-center border border-gray-300 rounded-md bg-white w-20">
+                      <button
+                        onClick={() => handleDecreaseQuantity(cartItem.id)}
+                        className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-l-md"
+                      >
+                        -
+                      </button>
+                      <span className="text-base font-medium text-gray-800">
+                        {cartItem.quantity}
+                      </span>
+                      <button
+                        onClick={() => handleIncreaseQuantity(cartItem.id)}
+                        className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </Box>
                 </Box>
+                <Typography
+                  variant="body2"
+                  className="absolute top-2 right-0 text-right text-base font-semibold text-gray-800"
+                >
+                  ${cartItem.price}
+                </Typography>
               </Box>
-              <Typography variant="body2" className="absolute top-2 right-0 text-right text-base font-semibold text-gray-800">
-                $0.00
-              </Typography>
-            </Box>
+            ))}
 
             {/* Footer */}
             <Box mt={4} px={2}>
@@ -199,7 +391,9 @@ const Step2: React.FC<StepProps> = ({ cartItems }) => {
               </Box>
               <Box className="p-3 flex justify-between">
                 <Typography className="text-base">Subtotal</Typography>
-                <Typography className="text-base">$0.00</Typography>
+                <Typography variant="subtitle1">
+                  {calculateSubtotal(cartItems).toFixed(2)}
+                </Typography>{" "}
               </Box>
               <Box className="p-3 flex justify-between font-bold text-base">
                 <Typography className="font-bold text-xl">Total</Typography>

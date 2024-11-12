@@ -1,6 +1,4 @@
-// ViewCart/page.tsx
 "use client";
-
 import React, { useState } from "react";
 import Box from "@mui/material/Box";
 import Stepper from "@mui/material/Stepper";
@@ -14,36 +12,39 @@ import Step3 from "./Step3";
 import Footer from "../../components/Footer/page";
 import { useCart } from "../CartContext/page";
 
-
 const steps = ["Shopping Cart", "Checkout Details", "Order Complete"];
 
 export default function ViewCart() {
   const [activeStep, setActiveStep] = useState(0);
   const [completed, setCompleted] = useState<{ [index: number]: boolean }>({});
-  const { cartItems } = useCart();
-
-  const handleNext = () => {
-    // Mark current step as completed
-    setCompleted((prevCompleted) => ({
-      ...prevCompleted,
-      [activeStep]: true,
-    }));
-    // Move to the next step
-    setActiveStep((prevStep) => Math.min(prevStep + 1, steps.length - 1));
-  };
+  const { cartItems, setCartItems } = useCart();
 
   const handleBack = () => {
     setActiveStep((prevStep) => Math.max(prevStep - 1, 0));
   };
 
+  const handleCheckout = () => {
+    setCompleted((prevCompleted) => ({
+      ...prevCompleted,
+      [activeStep]: true,
+    }));
+    setActiveStep((prevStep) => Math.min(prevStep + 1, steps.length - 1));
+  };
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
-        return <Step1 cartItems={cartItems} />;
+        return (
+          <Step1
+            cartItems={cartItems}
+            setCartItems={setCartItems}
+            handleCheckout={handleCheckout}
+          />
+        );
       case 1:
-        return <Step2 cartItems={cartItems} />;
+        return <Step2 cartItems={cartItems} setCartItems={setCartItems} />;
       case 2:
-        return <Step3 cartItems={cartItems} />;
+        return <Step3 cartItems={cartItems} setCartItems={setCartItems} />;
       default:
         return null;
     }
@@ -74,9 +75,6 @@ export default function ViewCart() {
               Back
             </Button>
             <Box sx={{ flex: "1 1 auto" }} />
-            <Button onClick={handleNext}>
-              {activeStep === steps.length - 1 ? "Finish" : "Next"}
-            </Button>
           </Box>
         </Box>
       </div>
