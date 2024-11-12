@@ -3,7 +3,20 @@ import Button from "@mui/material/Button";
 import Badge from "@mui/material/Badge";
 import { IoCartOutline } from "react-icons/io5";
 
-const Step3 = () => {
+interface CartItem {
+  id: string;
+  image: string;
+  name: string;
+  price: number;
+  isFavourite: boolean;
+  quantity: number;
+}
+
+interface StepProps {
+  cartItems: CartItem[];
+}
+
+const Step3: React.FC<StepProps> = ({ cartItems }) => {
   return (
     <div className="mx-auto mt-24 mb-14 text-center max-w-7xl px-4">
       {/* Container for the thank you message and order info */}

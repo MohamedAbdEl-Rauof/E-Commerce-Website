@@ -7,9 +7,22 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { CiCreditCard1 } from "react-icons/ci";
 import { Button } from "flowbite-react";
 
+interface CartItem {
+  id: string;
+  image: string;
+  name: string;
+  price: number;
+  isFavourite: boolean;
+  quantity: number;
+}
+
+interface StepProps {
+  cartItems: CartItem[];
+}
+
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
-const Step2 = () => {
+const Step2: React.FC<StepProps> = ({ cartItems }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>("");
 
   const handleSelect = (option: string) => {
