@@ -18,6 +18,7 @@ export default function ViewCart() {
   const [activeStep, setActiveStep] = useState(0);
   const [completed, setCompleted] = useState<{ [index: number]: boolean }>({});
   const { cartItems, setCartItems } = useCart();
+  const [selectedShipping, setSelectedShipping] = useState<number>(1); // Moved state here
 
   const handleBack = () => {
     setActiveStep((prevStep) => Math.max(prevStep - 1, 0));
@@ -39,10 +40,13 @@ export default function ViewCart() {
             cartItems={cartItems}
             setCartItems={setCartItems}
             handleCheckout={handleCheckout}
+            selectedShipping={selectedShipping}
+            setSelectedShipping={setSelectedShipping}
           />
         );
       case 1:
-        return <Step2 cartItems={cartItems} setCartItems={setCartItems} />;
+        return <Step2 cartItems={cartItems} setCartItems={setCartItems} selectedShipping={selectedShipping}
+        />;
       case 2:
         return <Step3 cartItems={cartItems} setCartItems={setCartItems} />;
       default:

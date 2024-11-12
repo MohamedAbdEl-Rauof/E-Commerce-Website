@@ -32,14 +32,15 @@ interface CartItem {
 interface StepProps {
   cartItems: CartItem[];
   setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
-  handleCheckout: () => void;  
-  
+  handleCheckout: () => void;
+  selectedShipping: number;
+  setSelectedShipping: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const label = { inputProps: { "aria-label": "check circle" } };
 
-const Step1: React.FC<StepProps> = ({ cartItems, setCartItems,handleCheckout }) => {
-  const [selectedShipping, setSelectedShipping] = useState<number>(1);
+const Step1: React.FC<StepProps> = ({ cartItems, setCartItems, handleCheckout, selectedShipping,
+  setSelectedShipping }) => {
   const [total, setTotal] = useState<number>(0);
   const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
   const { data: session } = useSession();
@@ -383,7 +384,7 @@ const Step1: React.FC<StepProps> = ({ cartItems, setCartItems,handleCheckout }) 
           color="primary"
           fullWidth
           sx={{ mt: 3 }}
-          onClick={handleCheckout} 
+          onClick={handleCheckout}
         >
           Checkout
         </Button>

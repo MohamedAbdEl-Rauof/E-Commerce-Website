@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import Swal from "sweetalert2";
 import { valibotResolver } from "@hookform/resolvers/valibot";
-import { object, string, pipe, nonEmpty, custom, boolean } from "valibot";
+import { object, string, pipe, custom, boolean } from "valibot";
 
 type UserData = {
   name: string;

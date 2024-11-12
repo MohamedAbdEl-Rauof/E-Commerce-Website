@@ -12,6 +12,11 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { CiCreditCard1 } from "react-icons/ci";
 import { Button } from "flowbite-react";
 import { useSession } from "next-auth/react";
+import { useForm, Controller } from "react-hook-form";
+import { valibotResolver } from "@hookform/resolvers/valibot";
+import { object, string, pipe, custom, boolean } from "valibot";
+import Swal from "sweetalert2";
+
 
 interface CartItem {
   id: string;
@@ -25,22 +30,116 @@ interface CartItem {
 interface StepProps {
   cartItems: CartItem[];
   setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  selectedShipping: number;
 }
 
-const label = { inputProps: { "aria-label": "Checkbox demo" } };
+type UserData = {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  emailAddress: string;
+  streetAddress: string;
+  country: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  cardNumber: string;
+  password: string;
+  expirationDate: string;
+  cvc: string;
+};
 
-const Step2: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
+const label = { inputProps: { "aria-label": "Checkbox demo" } };
+// Schema 
+const schema = object({
+  firstName: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "First Name is required"),
+    custom((value) => /^[A-Za-z\s]+$/.test(value as string), "First Name must not contain numbers or special characters")
+  ),
+  lastName: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "Last Name is required"),
+    custom((value) => /^[A-Za-z\s]+$/.test(value as string), "Last Name must not contain numbers or special characters")
+  ),
+  phoneNumber: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "Phone Number is required"),
+    custom((value) => /^\+?[0-9]{10,14}$/.test(value as string), "Please enter a valid phone number")
+  ),
+  emailAddress: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "Email is required"),
+    custom((value) => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value as string), "Please enter a valid email address")
+  ),
+  streetAddress: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "Street Address is required")
+  ),
+  country: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "Country is required")
+  ),
+  city: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "City is required")
+  ),
+  state: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "State is required")
+  ),
+  zipCode: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "Zip Code is required")
+  ),
+  cardNumber: pipe(
+    string(),
+    custom((value) => /^\d{16}$/.test(value as string), "Invalid card number - must be 16 digits")
+  ),
+  expirationDate: pipe(
+    string(),
+    custom((value) => (value as string).trim() !== "", "Expiration Date is required")
+  ),
+  cvc: pipe(
+    string(),
+    custom((value) => /^\d{3}$/.test(value as string), "Invalid CVC - must be 3 digits")
+  ),
+});
+
+const Step2: React.FC<StepProps> = ({ cartItems, setCartItems, selectedShipping }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>("");
-  const [selectedShipping, setSelectedShipping] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
   const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
+  console.log("Raoufffffff", selectedShipping)
+
+  const shippingDescription = selectedShipping === 1
+    ? "free"
+    : selectedShipping === 2
+      ? "Express"
+      : selectedShipping === 3
+        ? "Pickup"
+        : "Unknown";
 
   const handleSelect = (option: string) => {
     setSelectedOption(option);
   };
+
+  // Update total on cartItems or selectedShipping change
+  useEffect(() => {
+    const subtotal = calculateSubtotal(cartItems);
+    let shippingCost = 0;
+
+    if (selectedShipping === 2) {
+      shippingCost = 15.0; // Express Shipping
+    } else if (selectedShipping === 3) {
+      shippingCost = -(subtotal * 0.21); // Pickup discount
+    }
+
+    setTotal(subtotal + shippingCost);
+  }, [cartItems, selectedShipping]);
 
   const handleIncreaseQuantity = (id: string) => {
     setCartItems((prevItems) =>
@@ -119,291 +218,340 @@ const Step2: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
     return cartItems.reduce((acc, item) => acc + item.quantity * item.price, 0);
   };
 
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+    reset,
+  } = useForm<UserData>({
+    resolver: valibotResolver(schema),
+    mode: "all",
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+      emailAddress: "",
+      streetAddress: "",
+      country: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      cardNumber: "",
+      expirationDate: "",
+      cvc: ""
+    },
+  });
+
+  const onSubmit = async (data: UserData) => {
+    console.log("Form submitted with data:", data);
+    try {
+      // Send POST request to the /api/orders endpoint
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Unknown error occurred");
+      }
+
+      // Parse the response to get the order code and other details
+      const responseData = await response.json();
+      const { orderCode } = responseData;
+
+      // Show success alert with the order code
+      Swal.fire({
+        title: "Success!",
+        text: `Order placed successfully! Order Code: ${orderCode}`,
+        icon: "success",
+      });
+
+      // Optionally reset the form after successful submission (you need to define this method)
+      reset(); // Assuming `reset` clears the form fields
+    } catch (error: any) {
+      console.error(error.message);
+      // Show error alert
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error.message || "Please try again later",
+      });
+    }
+  };
+
+
   return (
-    <div className=" mx-auto mt-24 mb-14">
-      {/* Main container with flex layout */}
-      <Box display="flex" gap={4} flexDirection={{ xs: "column", md: "row" }}>
-        {/* Left Column: Contact Information, Shipping Address, Payment Method */}
-        <Box flex="1" display="flex" flexDirection="column" gap={4}>
-          {/* Contact Information */}
-          <Box
-            sx={{
-              padding: 3,
-              border: "1px solid #e0e0e0",
-              borderRadius: 2,
-              boxShadow: 3,
-              backgroundColor: "#fff",
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-              Contact Information
-            </Typography>
-            <Box sx={{ mt: 4 }}>
-              <Box
-                display="flex"
-                flexDirection={{ xs: "column", sm: "row" }}
-                gap={2}
-                mb={3}
-              >
-                <TextField
-                  fullWidth
-                  id="first-name"
-                  label="First Name"
-                  variant="outlined"
-                />
-                <TextField
-                  fullWidth
-                  id="last-name"
-                  label="Last Name"
-                  variant="outlined"
-                />
-              </Box>
-              <Box display="flex" flexDirection="column" gap={2}>
-                <TextField
-                  fullWidth
-                  id="phone-number"
-                  label="Phone Number"
-                  variant="outlined"
-                />
-                <TextField
-                  fullWidth
-                  id="email-address"
-                  label="Email Address"
-                  variant="outlined"
-                />
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Shipping Address */}
-          <Box
-            sx={{
-              padding: 3,
-              border: "1px solid #e0e0e0",
-              borderRadius: 2,
-              boxShadow: 3,
-              backgroundColor: "#fff",
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-              Shipping Address
-            </Typography>
-            <Box sx={{ mt: 4 }}>
-              <TextField
-                fullWidth
-                id="street-address"
-                label="Street Address"
-                variant="outlined"
-              />
-              <TextField
-                fullWidth
-                id="country"
-                label="Country"
-                variant="outlined"
-                sx={{ mt: 2 }}
-              />
-              <TextField
-                fullWidth
-                id="city"
-                label="Town / City"
-                variant="outlined"
-                sx={{ mt: 2 }}
-              />
-              <Box
-                display="flex"
-                flexDirection={{ xs: "column", sm: "row" }}
-                gap={2}
-                mt={2}
-              >
-                <TextField
-                  fullWidth
-                  id="state"
-                  label="State"
-                  variant="outlined"
-                />
-                <TextField
-                  fullWidth
-                  id="zip-code"
-                  label="Zip Code"
-                  variant="outlined"
-                />
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
-                <Checkbox {...label} />
-                <Typography component="label" sx={{ ml: 1 }}>
-                  Use a different billing address (optional)
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Payment Method */}
-          <Box
-            sx={{
-              padding: 3,
-              border: "1px solid #e0e0e0",
-              borderRadius: 2,
-              boxShadow: 3,
-              backgroundColor: "#fff",
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-              Payment Method
-            </Typography>
-            <Box sx={{ mt: 4, borderBottom: "1px solid #e0e0e0", pb: 1 }}>
-              <ListItemButton
-                sx={{
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "8px",
-                  padding: "8px",
-                  "&:hover": { borderColor: "#b0b0b0" },
-                }}
-                onClick={() => handleSelect("credit-card")}
-              >
-                <Checkbox
-                  icon={<RadioButtonUncheckedIcon />}
-                  checkedIcon={<CheckCircleIcon />}
-                  checked={selectedOption === "credit-card"}
-                />
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}
-                >
-                  <ListItemText primary="Pay By Card Credit" />
-                  <CiCreditCard1 style={{ fontSize: 24 }} />
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className=" mx-auto mt-24 mb-14" >
+        {/* Main container with flex layout */}
+        < Box display="flex" gap={4} flexDirection={{ xs: "column", md: "row" }} >
+          {/* Left Column: Contact Information, Shipping Address, Payment Method */}
+          <Box flex="1" display="flex" flexDirection="column" gap={4}>
+            {/* Contact Information */}
+            <Box sx={{ padding: 3, border: "1px solid #e0e0e0", borderRadius: 2, boxShadow: 3, backgroundColor: "#fff" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                Contact Information
+              </Typography>
+              <Box sx={{ mt: 4 }}>
+                <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} gap={2} mb={3}>
+                  {/* First Name */}
+                  <Controller
+                    name="firstName"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        id="first-name"
+                        label="First Name"
+                        variant="outlined"
+                        className="mt-4"
+                        error={!!errors["firstName"]}
+                        helperText={errors["firstName"]?.message}
+                      />
+                    )}
+                  />
+                  {/* Last Name */}
+                  <Controller
+                    name="lastName"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        id="last-name"
+                        label="Last Name"
+                        variant="outlined"
+                        error={!!errors["lastName"]}
+                        helperText={errors["lastName"]?.message}
+                      />
+                    )}
+                  />
                 </Box>
-              </ListItemButton>
-              <ListItemButton
-                className="mt-7"
-                sx={{
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "8px",
-                  padding: "8px",
-                  "&:hover": { borderColor: "#b0b0b0" },
-                }}
-                onClick={() => handleSelect("paypal")}
-              >
-                <Checkbox
-                  icon={<RadioButtonUncheckedIcon />}
-                  checkedIcon={<CheckCircleIcon />}
-                  checked={selectedOption === "paypal"}
-                />
-                <ListItemText primary="Paypal" />
-              </ListItemButton>
-            </Box>
-            <Box sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                id="card-number"
-                label="Card Number"
-                variant="outlined"
-              />
-              <Box
-                display="flex"
-                flexDirection={{ xs: "column", sm: "row" }}
-                gap={2}
-                mt={2}
-              >
-                <TextField
-                  fullWidth
-                  id="expiration-date"
-                  label="Expiration Date"
-                  variant="outlined"
-                />
-                <TextField fullWidth id="cvc" label="CVC" variant="outlined" />
+                <Box display="flex" flexDirection="column" gap={2}>
+                  <Controller
+                    name="phoneNumber"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        id="phone-number"
+                        label="Phone Number"
+                        variant="outlined"
+                        error={!!errors["phoneNumber"]}
+                        helperText={errors["phoneNumber"]?.message}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name="emailAddress"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        id="email-address"
+                        label="Email Address"
+                        variant="outlined"
+                        error={!!errors["emailAddress"]}
+                        helperText={errors["emailAddress"]?.message}
+                      />
+                    )}
+                  />
+                </Box>
               </Box>
             </Box>
-          </Box>
-          <Button className="w-full bg-black text-white hover:bg-gray-800">
-            Place Order
-          </Button>
-        </Box>
 
-        {/* Order Summary */}
-        <Box flex="1" maxWidth={600}>
-          <Box
-            sx={{
-              padding: 3,
-              border: "1px solid #e0e0e0",
-              borderRadius: 2,
-              boxShadow: 3,
-              backgroundColor: "#fff",
-            }}
-          >
-            <Typography component="div" className="text-2xl font-bold mb-4">
-              Order Summary
-            </Typography>
-            {/* Cart Items */}
-            {cartItems.map((cartItem) => (
-              <Box
-                key={cartItem.id}
-                className="relative flex items-center space-x-6 p-4 bg-gray-50 rounded-md shadow-md"
-              >
-                <img
-                  src={cartItem.image}
-                  alt="img"
-                  className="w-16 h-16 object-cover rounded-md border border-gray-300"
+            {/* Shipping Address */}
+            <Box sx={{ padding: 3, border: "1px solid #e0e0e0", borderRadius: 2, boxShadow: 3, backgroundColor: "#fff" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                Shipping Address
+              </Typography>
+              <Box sx={{ mt: 4 }}>
+                <Controller
+                  name="streetAddress"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} fullWidth id="street-address" label="Street Address" variant="outlined" />
+                  )}
                 />
-                <Box className="flex flex-col flex-1 space-y-2">
-                  <Typography
-                    variant="body1"
-                    className="text-base font-semibold text-gray-800"
-                  >
-                    Product Name
+                <Controller
+                  name="country"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} fullWidth id="country" label="Country" variant="outlined" sx={{ mt: 2 }} />
+                  )}
+                />
+                <Controller
+                  name="city"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} fullWidth id="city" label="Town / City" variant="outlined" sx={{ mt: 2 }} />
+                  )}
+                />
+                <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} gap={2} mt={2}>
+                  <Controller
+                    name="state"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField {...field} fullWidth id="state" label="State" variant="outlined" />
+                    )}
+                  />
+                  <Controller
+                    name="zipCode"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField {...field} fullWidth id="zip-code" label="Zip Code" variant="outlined" />
+                    )}
+                  />
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+                  <Checkbox />
+                  <Typography component="label" sx={{ ml: 1 }}>
+                    Use a different billing address (optional)
                   </Typography>
-                  <Box className="flex items-center border border-gray-300 rounded-md bg-white w-20">
-                    <div className="flex items-center justify-center border border-gray-300 rounded-md bg-white w-20">
-                      <button
-                        onClick={() => handleDecreaseQuantity(cartItem.id)}
-                        className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-l-md"
-                      >
-                        -
-                      </button>
-                      <span className="text-base font-medium text-gray-800">
-                        {cartItem.quantity}
-                      </span>
-                      <button
-                        onClick={() => handleIncreaseQuantity(cartItem.id)}
-                        className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </Box>
                 </Box>
-                <Typography
-                  variant="body2"
-                  className="absolute top-2 right-0 text-right text-base font-semibold text-gray-800"
-                >
-                  ${cartItem.price}
-                </Typography>
-              </Box>
-            ))}
-
-            {/* Footer */}
-            <Box mt={4} px={2}>
-              <Box className="p-3 flex justify-between">
-                <Typography className="text-base">Shipping</Typography>
-                <Typography className="text-base">Free</Typography>
-              </Box>
-              <Box className="p-3 flex justify-between">
-                <Typography className="text-base">Subtotal</Typography>
-                <Typography variant="subtitle1">
-                  {calculateSubtotal(cartItems).toFixed(2)}
-                </Typography>{" "}
-              </Box>
-              <Box className="p-3 flex justify-between font-bold text-base">
-                <Typography className="font-bold text-xl">Total</Typography>
-                <Typography className="font-bold text-xl">$0.00</Typography>
               </Box>
             </Box>
+
+            {/* Payment Method */}
+            <Box sx={{ padding: 3, border: "1px solid #e0e0e0", borderRadius: 2, boxShadow: 3, backgroundColor: "#fff" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                Payment Method
+              </Typography>
+              <Box sx={{ mt: 4, borderBottom: "1px solid #e0e0e0", pb: 1 }}>
+                <ListItemButton sx={{ border: "1px solid #e0e0e0", borderRadius: "8px", padding: "8px" }} onClick={() => handleSelect("credit-card")}>
+                  <Checkbox icon={<RadioButtonUncheckedIcon />} checkedIcon={<CheckCircleIcon />} />
+                  <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                    <ListItemText primary="Pay By Card Credit" />
+                    <CiCreditCard1 style={{ fontSize: 24 }} />
+                  </Box>
+                </ListItemButton>
+                <ListItemButton sx={{ border: "1px solid #e0e0e0", borderRadius: "8px", padding: "8px" }} onClick={() => handleSelect("paypal")}>
+                  <Checkbox icon={<RadioButtonUncheckedIcon />} checkedIcon={<CheckCircleIcon />} />
+                  <ListItemText primary="Paypal" />
+                </ListItemButton>
+              </Box>
+              <Box sx={{ mt: 2 }}>
+                <Controller
+                  name="cardNumber"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} fullWidth id="card-number" label="Card Number" variant="outlined" />
+                  )}
+                />
+                <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} gap={2} mt={2}>
+                  <Controller
+                    name="expirationDate"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField {...field} fullWidth id="expiration-date" label="Expiration Date" variant="outlined" />
+                    )}
+                  />
+                  <Controller
+                    name="cvc"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField {...field} fullWidth id="cvc" label="CVC" variant="outlined" />
+                    )}
+                  />
+                </Box>
+              </Box>
+            </Box>
+
+            <Button type="submit" disabled={!isValid}
+              className="w-full bg-black text-white hover:bg-gray-800">
+              Place Order
+            </Button>
           </Box>
-        </Box>
-      </Box>
-    </div>
+
+          {/* Order Summary */}
+          < Box flex="1" maxWidth={600} >
+            <Box
+              sx={{
+                padding: 3,
+                border: "1px solid #e0e0e0",
+                borderRadius: 2,
+                boxShadow: 3,
+                backgroundColor: "#fff",
+              }}
+            >
+              <Typography component="div" className="text-2xl font-bold mb-4">
+                Order Summary
+              </Typography>
+              {/* Cart Items */}
+              {cartItems.map((cartItem) => (
+                <Box
+                  key={cartItem.id}
+                  className="relative flex items-center space-x-6 p-4 bg-gray-50 rounded-md shadow-md"
+                >
+                  <img
+                    src={cartItem.image}
+                    alt="img"
+                    className="w-16 h-16 object-cover rounded-md border border-gray-300"
+                  />
+                  <Box className="flex flex-col flex-1 space-y-2">
+                    <Typography
+                      variant="body1"
+                      className="text-base font-semibold text-gray-800"
+                    >
+                      Product Name
+                    </Typography>
+                    <Box className="flex items-center border border-gray-300 rounded-md bg-white w-20">
+                      <div className="flex items-center justify-center border border-gray-300 rounded-md bg-white w-20">
+                        <button
+                          onClick={() => handleDecreaseQuantity(cartItem.id)}
+                          className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-l-md"
+                        >
+                          -
+                        </button>
+                        <span className="text-base font-medium text-gray-800">
+                          {cartItem.quantity}
+                        </span>
+                        <button
+                          onClick={() => handleIncreaseQuantity(cartItem.id)}
+                          className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </Box>
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    className="absolute top-2 right-0 text-right text-base font-semibold text-gray-800"
+                  >
+                    ${cartItem.price}
+                  </Typography>
+                </Box>
+              ))}
+
+              {/* Footer */}
+              <Box mt={4} px={2}>
+                <Box className="p-3 flex justify-between">
+                  <Typography className="text-base">Shipping</Typography>
+                  <Typography className="text-base">{shippingDescription}</Typography>
+                </Box>
+                <Box className="p-3 flex justify-between">
+                  <Typography className="text-base">Subtotal</Typography>
+                  <Typography variant="subtitle1">
+                    {calculateSubtotal(cartItems).toFixed(2)}
+                  </Typography>{" "}
+                </Box>
+                <Box className="p-3 flex justify-between font-bold text-base">
+                  <Typography className="font-bold text-xl">Total</Typography>
+                  <Typography className="font-bold text-xl">${total.toFixed(2)}</Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box >
+        </Box >
+      </div >
+    </form>
   );
 };
 
