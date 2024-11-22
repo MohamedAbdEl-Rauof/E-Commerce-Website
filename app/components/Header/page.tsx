@@ -1,3 +1,4 @@
+// components/Header / page.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { CiSearch } from "react-icons/ci";
@@ -25,6 +26,8 @@ import Typography from "@mui/material/Typography";
 import Badge from "@mui/material/Badge";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import Link from "next/link";
+import { useCart } from "../../pages/CartContext/page"; // Context Api
+import { toast } from "react-toastify";
 
 interface Product {
   id: string;
@@ -60,8 +63,8 @@ const Header = () => {
   const [activeItem, setActiveItem] = useState<NavItem>("Home");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [cartItems, setCartItems] = useState<Product[]>([]);
-  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0)
+  const { cartItems, setCartItems } = useCart();
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
 
   // Access user ID directly from the session
@@ -131,9 +134,7 @@ const Header = () => {
   const increment = (productId: string) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
+        item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
       )
     );
 
@@ -167,7 +168,7 @@ const Header = () => {
     });
   };
 
-  // change Favourite button 
+  // change Favourite button
   const toggleFavourite = async (productId: string) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
@@ -185,7 +186,7 @@ const Header = () => {
         newChanges.set(productId, updatedItem);
 
         if (updatedItem.quantity === 0 && !updatedItem.isFavourite) {
-          deleteFromDatabase(productId);
+          deleteProduct(productId);
           newChanges.delete(productId);
         }
       }
@@ -193,30 +194,22 @@ const Header = () => {
     });
   };
 
-  // delte item from DB 
-  const deleteFromDatabase = async (productId: string) => {
+  // delte item from DB
+  const deleteProduct = async (productId: string) => {
     try {
-      await fetch(`/api/addtocart`, {
-        method: "DELETE",
-        body: JSON.stringify({ userId, productId }),
-        headers: { "Content-Type": "application/json" },
-      });
-      console.log("Item deleted from database successfully");
-    } catch (error) {
-      console.error("Error deleting item from database:", error);
-    }
-  };
+      // Remove the product from the cart state
+      setCartItems((prevItems) =>
+        prevItems.filter((item) => item.id !== productId)
+      );
 
-  // delte item from cart 
-  const removeProductFromCart = async (productId: string) => {
-    try {
-      setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+      // Send DELETE request to remove the item from the database
       await fetch("/api/addtocart", {
         method: "DELETE",
         body: JSON.stringify({ userId, productId }),
         headers: { "Content-Type": "application/json" },
-
       });
+
+      // Show a success notification
       Swal.fire({
         position: "center",
         icon: "success",
@@ -224,8 +217,11 @@ const Header = () => {
         showConfirmButton: false,
         timer: 1000,
       });
+      console.log(
+        "Item deleted from database and removed from cart successfully"
+      );
     } catch (error) {
-      console.error("Error removing product from cart:", error);
+      console.error("Error deleting product:", error);
     }
   };
 
@@ -258,7 +254,7 @@ const Header = () => {
 
   // calcultaeSuptotal
   const calcultaeSuptotal = (cartItems: CartItem[]) => {
-    return cartItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+    return cartItems.reduce((acc, item) => acc + item.quantity * item.price, 0);
   };
 
   const list = () => (
@@ -277,7 +273,11 @@ const Header = () => {
           {cartItems
             .filter((item) => item.quantity > 0 || item.isFavourite)
             .map((item) => (
-              <Typography component="div" className="pl-4 pt-9 text-2xl" key={item.id}>
+              <Typography
+                component="div"
+                className="pl-4 pt-9 text-2xl"
+                key={item.id}
+              >
                 <div className="relative flex items-center space-x-6 p-4 bg-gray-50 rounded-md shadow-md">
                   <div>
                     <img
@@ -288,10 +288,17 @@ const Header = () => {
                   </div>
                   <div className="flex flex-col flex-1 space-y-2">
                     <div className="flex justify-between items-center">
-                      <p className="text-base font-semibold text-gray-800">{item.name || "Product"}</p>
+                      <p className="text-base font-semibold text-gray-800">
+                        {item.name || "Product"}
+                      </p>
                       <div className="absolute top-2 right-0 p-2 text-right text-base flex flex-col items-end">
-                        <p className="text-gray-800 font-semibold">${item.price || "0.00"}</p>
-                        <IoMdClose onClick={() => removeProductFromCart(item.id)} className="text-lg text-gray-600 cursor-pointer" />
+                        <p className="text-gray-800 font-semibold">
+                          ${item.price || "0.00"}
+                        </p>
+                        <IoMdClose
+                          onClick={() => deleteProduct(item.id)}
+                          className="text-lg text-gray-600 cursor-pointer"
+                        />
                       </div>
                     </div>
                     <div className="flex items-center border border-gray-300 rounded-md bg-white w-20">
@@ -301,7 +308,9 @@ const Header = () => {
                       >
                         -
                       </button>
-                      <span className="text-base font-medium text-gray-800">{item.quantity}</span>
+                      <span className="text-base font-medium text-gray-800">
+                        {item.quantity}
+                      </span>
                       <button
                         onClick={() => increment(item.id)}
                         className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md"
@@ -359,9 +368,11 @@ const Header = () => {
           Checkout
         </Button>
         <div className="text-center mt-3">
-          <Link href="/pages/ViewCart" >
+          <Link href="/pages/ViewCart">
             <button className="text-black text-xs font-semibold">
-              <u className="text-black text-xs font-semibold text-center">View Cart</u>
+              <u className="text-black text-xs font-semibold text-center">
+                View Cart
+              </u>
             </button>
           </Link>
         </div>
