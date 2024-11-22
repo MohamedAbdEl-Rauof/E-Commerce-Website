@@ -45,8 +45,14 @@ export default function ViewCart() {
           />
         );
       case 1:
-        return <Step2 cartItems={cartItems} setCartItems={setCartItems} selectedShipping={selectedShipping}
-        />;
+        return (
+          <Step2
+            cartItems={cartItems}
+            setCartItems={setCartItems}
+            handleCheckout={handleCheckout}
+            selectedShipping={selectedShipping}
+          />
+        );
       case 2:
         return <Step3 cartItems={cartItems} setCartItems={setCartItems} />;
       default:

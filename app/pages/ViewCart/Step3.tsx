@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import Badge from "@mui/material/Badge";
-import { IoCartOutline } from "react-icons/io5";
+import { useSession } from "next-auth/react";
 
 interface CartItem {
   id: string;
@@ -17,7 +17,56 @@ interface StepProps {
   setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
 }
 
+type Order = {
+  paymentMethod: {
+    method: string;
+  };
+  shoppingandTotal: {
+    Total: string;
+  };
+  createdAt: string;
+  orderCode: string;
+};
+
 const Step3: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
+  const { data: session } = useSession();
+  const userId = session?.user?.id || "";
+  const [order, setOrder] = useState<Order[] | null>(null);
+
+  useEffect(() => {
+    if (!userId) {
+      console.warn("User ID is not available. Skipping order fetch.");
+      return;
+    }
+
+    const fetchOrder = async () => {
+      try {
+        const response = await fetch(`/api/orders?userId=${userId}`, {
+          method: "GET",
+        });
+
+        if (!response.ok) {
+          const errorDetails = await response.text();
+          throw new Error(`Failed to fetch order data: ${errorDetails}`);
+        }
+
+        const data = await response.json();
+        setOrder(data);
+        console.log("Order data:", data);
+      } catch (error) {
+        console.error("Error fetching order:", error);
+      }
+    };
+
+    fetchOrder();
+  }, [userId]);
+
+  if (!order) {
+    return <div>Loading...</div>;
+  }
+
+  const firstOrder = order[0]; // Safely access the first order
+
   return (
     <div className="mx-auto mt-24 mb-14 text-center max-w-7xl px-4">
       {/* Container for the thank you message and order info */}
@@ -51,12 +100,18 @@ const Step3: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
             <h1 className="text-gray-500 text-xl">Payment Method:</h1>
           </div>
           <div className="text-left">
-            <h1 className="text-xl font-semibold text-gray-800">#4533-543</h1>
             <h1 className="text-xl font-semibold text-gray-800">
-              October 19, 2023
+              {firstOrder.orderCode}
             </h1>
-            <h1 className="text-xl font-semibold text-gray-800">$1,345</h1>
-            <h1 className="text-xl font-semibold text-gray-800">Credit Card</h1>
+            <h1 className="text-xl font-semibold text-gray-800">
+              {new Date(firstOrder.createdAt).toLocaleDateString()}
+            </h1>
+            <h1 className="text-xl font-semibold text-gray-800">
+              {firstOrder.shoppingandTotal.Total}
+            </h1>
+            <h1 className="text-xl font-semibold text-gray-800">
+              {firstOrder.paymentMethod.method}
+            </h1>
           </div>
         </div>
 

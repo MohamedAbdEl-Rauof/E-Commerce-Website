@@ -39,8 +39,13 @@ interface StepProps {
 
 const label = { inputProps: { "aria-label": "check circle" } };
 
-const Step1: React.FC<StepProps> = ({ cartItems, setCartItems, handleCheckout, selectedShipping,
-  setSelectedShipping }) => {
+const Step1: React.FC<StepProps> = ({
+  cartItems,
+  setCartItems,
+  handleCheckout,
+  selectedShipping,
+  setSelectedShipping,
+}) => {
   const [total, setTotal] = useState<number>(0);
   const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
   const { data: session } = useSession();
@@ -72,8 +77,8 @@ const Step1: React.FC<StepProps> = ({ cartItems, setCartItems, handleCheckout, s
   const handleIncreaseQuantity = (id: string) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      )
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
+      ),
     );
 
     setChanges((prevChanges) => {
@@ -91,8 +96,8 @@ const Step1: React.FC<StepProps> = ({ cartItems, setCartItems, handleCheckout, s
       prevItems.map((item) =>
         item.id === id && item.quantity > 1
           ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
+          : item,
+      ),
     );
 
     setChanges((prevChanges) => {
@@ -147,7 +152,7 @@ const Step1: React.FC<StepProps> = ({ cartItems, setCartItems, handleCheckout, s
     try {
       // Remove the product from the cart state
       setCartItems((prevItems) =>
-        prevItems.filter((item) => item.id !== productId)
+        prevItems.filter((item) => item.id !== productId),
       );
 
       // Send DELETE request to remove the item from the database
@@ -166,7 +171,7 @@ const Step1: React.FC<StepProps> = ({ cartItems, setCartItems, handleCheckout, s
         timer: 1000,
       });
       console.log(
-        "Item deleted from database and removed from cart successfully"
+        "Item deleted from database and removed from cart successfully",
       );
     } catch (error) {
       console.error("Error deleting product:", error);
