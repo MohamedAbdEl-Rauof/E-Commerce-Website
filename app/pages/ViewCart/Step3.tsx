@@ -70,7 +70,7 @@ const Step3: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
   return (
     <div className="mx-auto mt-24 mb-14 text-center max-w-7xl px-4">
       {/* Container for the thank you message and order info */}
-      <div className="border border-gray-200 rounded-lg shadow-lg p-8">
+      <div className="border border-gray-200 rounded-lg shadow-lg p-7">
         {/* Thank You message */}
         <div className="mb-8">
           <p className="text-gray-500 text-xl">Thank You! 🎉</p>
