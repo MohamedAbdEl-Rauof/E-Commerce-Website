@@ -1,6 +1,7 @@
 import clientPromise from "../../lib/mongodb";
 import { NextApiRequest, NextApiResponse } from "next";
 import bcrypt from "bcrypt";
+import { ObjectId } from "mongodb";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const client = await clientPromise;
@@ -35,7 +36,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         username,
         email,
         phone,
-        password: hashedPassword, 
+        password: hashedPassword,
       };
 
       const result = await db.collection("users").insertOne(newUser);
@@ -49,10 +50,23 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
   } else if (req.method === "GET") {
     try {
-      // Fetch all users from the "users" collection
-      const users = await db.collection("users").find({}).toArray();
+      const { id } = req.query;
 
-      // Send a success response with the list of users
+      if (id) {
+        // Fetch user by ID
+        const user = await db
+          .collection("users")
+          .findOne({ _id: new ObjectId(id as string) });
+
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        return res.status(200).json(user);
+      }
+
+      // If no ID is provided, fetch all users
+      const users = await db.collection("users").find({}).toArray();
       res.status(200).json(users);
     } catch (e) {
       console.error(e);
