@@ -29,6 +29,7 @@ import React, { useEffect, useRef, useState } from "react";
 interface UserData {
   name: string;
 }
+
 const StyledListItem = styled(ListItem, {
   shouldForwardProp: (prop) => prop !== "active",
 })<{ active?: boolean }>(({ theme, active }) => ({
@@ -56,7 +57,6 @@ export default function AccountSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const userId = session?.user?.id || "";
-  console.log(userId);
   const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
@@ -64,7 +64,6 @@ export default function AccountSidebar() {
       try {
         const response = await fetch(`/api/users?id=${userId}`);
         const data = await response.json();
-        console.log(data);
         setUserData(data);
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -76,7 +75,12 @@ export default function AccountSidebar() {
     }
   }, [userId]);
 
-  const [avatarSrc, setAvatarSrc] = useState("");
+  // Get avatar image from localStorage on mount
+  const [avatarSrc, setAvatarSrc] = useState(() => {
+    // Retrieve stored image from localStorage (if available)
+    const savedAvatar = localStorage.getItem("avatar");
+    return savedAvatar ? savedAvatar : "";
+  });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -91,9 +95,11 @@ export default function AccountSidebar() {
       // Update the avatar image with the selected file
       const fileReader = new FileReader();
       fileReader.onload = () => {
-        setAvatarSrc(fileReader.result as string);
+        const base64Image = fileReader.result as string;
+        setAvatarSrc(base64Image); // Update avatar state
+        localStorage.setItem("avatar", base64Image); // Store image in localStorage
       };
-      fileReader.readAsDataURL(file);
+      fileReader.readAsDataURL(file); // Convert file to Base64
     }
   };
 
