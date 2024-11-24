@@ -23,8 +23,10 @@ import {
 } from "react-icons/fa";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import {signOut, useSession} from "next-auth/react";
 import React, { useEffect, useRef, useState } from "react";
+import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 interface UserData {
   name: string;
@@ -50,7 +52,6 @@ const menuItems = [
     href: "/pages/UserAccount/address",
   },
   { label: "Orders", icon: FaShoppingBag, href: "/pages/UserAccount/orders" },
-  { label: "Wishlist", icon: FaHeart, href: "/pages/UserAccount/wishlist" },
 ];
 
 export default function AccountSidebar() {
@@ -58,6 +59,7 @@ export default function AccountSidebar() {
   const { data: session } = useSession();
   const userId = session?.user?.id || "";
   const [userData, setUserData] = useState<UserData | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,6 +104,18 @@ export default function AccountSidebar() {
       fileReader.readAsDataURL(file); // Convert file to Base64
     }
   };
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      title: "Logged Out Done",
+      showConfirmButton: false,
+      timer: 1500,
+    });
+    router.push("/pages/Home");
+  };
+
 
   return (
     <Card sx={{ p: 3, bgcolor: "grey.50", border: 0 }}>
@@ -165,6 +179,7 @@ export default function AccountSidebar() {
           startIcon={<FaSignOutAlt />}
           color="error"
           fullWidth
+          onClick={handleLogout}
           sx={{
             justifyContent: "flex-start",
             pl: 2,
