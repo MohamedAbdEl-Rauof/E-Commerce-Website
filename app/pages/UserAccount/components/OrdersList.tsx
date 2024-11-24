@@ -3,7 +3,6 @@
 import {
   Card,
   Typography,
-  Box,
   Table,
   TableBody,
   TableCell,
@@ -11,32 +10,32 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Button,
 } from "@mui/material";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
-const orders = [
-  {
-    id: "#12345",
-    date: "2024-01-15",
-    status: "Delivered",
-    total: "$299.99",
-    items: 3,
-  },
-  {
-    id: "#12346",
-    date: "2024-01-10",
-    status: "Processing",
-    total: "$149.99",
-    items: 2,
-  },
-  {
-    id: "#12347",
-    date: "2024-01-05",
-    status: "Cancelled",
-    total: "$89.99",
-    items: 1,
-  },
-];
+interface OrderItem {
+  productId: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+interface Order {
+  _id: string;
+  orderCode: string;
+  createdAt: string;
+  items: OrderItem[];
+  shoppingandTotal: {
+    subTotal: string;
+    Total: string;
+    shippingType:string;
+
+  };
+  paymentMethod:{
+    method:string;
+  }
+}
 
 const getStatusColor = (status: string) => {
   switch (status.toLowerCase()) {
@@ -52,48 +51,78 @@ const getStatusColor = (status: string) => {
 };
 
 export default function OrdersList() {
-  return (
-    <Card sx={{ p: 4 }}>
-      <Typography variant="h5" sx={{ mb: 4 }}>
-        My Orders
-      </Typography>
+  const { data: session } = useSession();
+  const userId = session?.user?.id || "";
+  const [orderData, setOrderData] = useState<Order[]>([]);
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Order</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Total</TableCell>
-              <TableCell>Items</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{order.id}</TableCell>
-                <TableCell>{order.date}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={order.status}
-                    color={getStatusColor(order.status) as any}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{order.total}</TableCell>
-                <TableCell>{order.items}</TableCell>
-                <TableCell align="right">
-                  <Button variant="outlined" size="small">
-                    View Details
-                  </Button>
-                </TableCell>
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/ordersAllAddress?userId=${userId}`);
+        const data = await response.json();
+        setOrderData(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    if (userId) {
+      fetchData();
+    }
+  }, [userId]);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatCurrency = (amount: string | number) => {
+    return `$${Number(amount).toFixed(2)}`;
+  };
+
+  return (
+      <Card sx={{ p: 4 }}>
+        <Typography variant="h5" sx={{ mb: 4 }}>
+          My Orders
+        </Typography>
+
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Order Code</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Items</TableCell>
+                <TableCell>Shipping Type</TableCell>
+                <TableCell>Total</TableCell>
+                <TableCell>Payment Method</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Card>
+            </TableHead>
+            <TableBody>
+              {orderData.map((order) => (
+                  <TableRow key={order._id}>
+                    <TableCell>{order.orderCode}</TableCell>
+                    <TableCell>{formatDate(order.createdAt)}</TableCell>
+                    <TableCell>
+                      <Chip
+                          label="Processing"
+                          color={getStatusColor("processing")}
+                          size="small"
+                      />
+                    </TableCell>
+                    <TableCell>{order.items.reduce((sum, item) => sum + item.quantity, 0)}</TableCell>
+                    <TableCell>{order.shoppingandTotal.shippingType}</TableCell>
+                    <TableCell>{formatCurrency(order.shoppingandTotal.Total)}</TableCell>
+                    <TableCell>{order.paymentMethod.method}</TableCell>
+                  </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
   );
 }
