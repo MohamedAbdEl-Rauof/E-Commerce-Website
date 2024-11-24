@@ -33,6 +33,8 @@ const Step3: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
   const userId = session?.user?.id || "";
   const [order, setOrder] = useState<Order[] | null>(null);
 
+  console.log("cart ya raouuuuuuuuuuuuf", cartItems);
+
   useEffect(() => {
     if (!userId) {
       console.warn("User ID is not available. Skipping order fetch.");
@@ -70,7 +72,7 @@ const Step3: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
   return (
     <div className="mx-auto mt-24 mb-14 text-center max-w-7xl px-4">
       {/* Container for the thank you message and order info */}
-      <div className="border border-gray-200 rounded-lg shadow-lg p-8">
+      <div className="border border-gray-200 rounded-lg shadow-lg p-7">
         {/* Thank You message */}
         <div className="mb-8">
           <p className="text-gray-500 text-xl">Thank You! 🎉</p>
@@ -80,16 +82,23 @@ const Step3: React.FC<StepProps> = ({ cartItems, setCartItems }) => {
         </div>
 
         {/* Order Badge (with image) */}
-        <div className="pt-5 flex justify-center">
-          <Badge badgeContent={2} color="primary" overlap="circular">
-            <img
-              src="/images/Bannar/Paste image.jpg"
-              alt="Order Badge"
-              className="rounded-2xl"
-              width={80}
-              height={80}
-            />
-          </Badge>
+        <div className="pt-5 flex justify-center gap-4">
+          {cartItems.map((item, index) => (
+            <Badge
+              key={item.id}
+              badgeContent={item.quantity}
+              color="primary"
+              overlap="circular"
+            >
+              <img
+                src={item.image}
+                alt={item.name}
+                className="rounded-2xl"
+                width={80}
+                height={80}
+              />
+            </Badge>
+          ))}
         </div>
 
         <div className="mt-10 mb-10 justify-center flex space-x-24">

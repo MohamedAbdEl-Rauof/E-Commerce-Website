@@ -1,11 +1,9 @@
-import React from 'react'
-
-const page = () => {
+import AccountDetails from "./components/AccountDetails";
+import Header from "../../components/Header/page";
+export default function AccountPage() {
   return (
     <div>
-      <h1> My Account</h1>
+      <AccountDetails />
     </div>
-  )
+  );
 }
-
-export default page
