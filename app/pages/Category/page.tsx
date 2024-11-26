@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSelectedCategory } from "../.././pages/SelectedCategoryForProductContext/page";
 import Header from "../../components/Header/page";
 import Footer from "../../components/Footer/page";
-import { motion } from "framer-motion";
 
 interface Category {
   _id: string;
@@ -15,7 +16,8 @@ interface Category {
 const Category = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<Category[]>([]);
+  const router = useRouter();
+  const { setCategoryId } = useSelectedCategory();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,20 +34,10 @@ const Category = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const fetchDataa = async () => {
-      try {
-        const response = await fetch("/api/products");
-        const data = await response.json();
-        setProducts(data);
-        console.log("produuuuuuuuuuuuuuuuct data ya Rouaf", data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        setIsLoading(false);
-      }
-    };
-    fetchDataa();
-  }, []);
+  const handleCategoryClick = (categoryId: string) => {
+    setCategoryId(categoryId); // Store category ID in context
+    router.push("/pages/Product");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -69,7 +61,8 @@ const Category = () => {
             {categories.map((category) => (
               <div
                 key={category._id}
-                className="group relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl"
+                onClick={() => handleCategoryClick(category._id)}
+                className="group relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl cursor-pointer"
               >
                 <div className="aspect-w-16 aspect-h-9 relative h-64">
                   <img

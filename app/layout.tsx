@@ -1,6 +1,7 @@
 // app/layout.tsx
 import { AuthProvider } from "@/app/components/Providers";
 import { CartProvider } from "@/app/pages/CartContext/page";
+import { SelectedCategoryProvider } from "@/app/pages/SelectedCategoryForProductContext/page";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -33,7 +34,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <CartProvider>
-            {children}
+            <SelectedCategoryProvider>{children}</SelectedCategoryProvider>
           </CartProvider>
         </AuthProvider>
       </body>
