@@ -58,7 +58,7 @@ const Home = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [favorite, setFavorite] = useState(
-    new Array(products.length).fill(false)
+    new Array(products.length).fill(false),
   );
   const [articles, setArticles] = useState<Article[]>([]);
   const { data: session } = useSession();
@@ -99,7 +99,7 @@ const Home = () => {
   // Function to go to the previous image
   const prevImage = () => {
     setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + images.length) % images.length
+      (prevIndex) => (prevIndex - 1 + images.length) % images.length,
     );
   };
 
@@ -148,7 +148,7 @@ const Home = () => {
         const data = await response.json();
         // Filter to only show products from the last 3 days
         const recentProducts = data.filter((product: Product) =>
-          isDateWithinLastThreeDays(product.createdAt)
+          isDateWithinLastThreeDays(product.createdAt),
         );
         setProducts(recentProducts);
         setFavorite(new Array(recentProducts.length).fill(false));
@@ -233,7 +233,7 @@ const Home = () => {
   const handleAddToCart = (
     productId: string,
     quantity: number,
-    isFavourite: boolean
+    isFavourite: boolean,
   ) => {
     if (session && session.user) {
       const userId = session.user.id; // Get user ID from session
@@ -363,7 +363,7 @@ const Home = () => {
                 products.map((item) => (
                   <div key={item._id} className="relative flex-shrink-0 w-64">
                     <div className="group relative">
-                      {/* Product Image */}
+                      {/* Category Image */}
                       <img
                         src={item.image}
                         alt={item.name}
@@ -373,7 +373,7 @@ const Home = () => {
                       <div
                         onClick={() => {
                           const index = products.findIndex(
-                            (product) => product._id === item._id
+                            (product) => product._id === item._id,
                           );
                           const newFav = [...favorite];
                           newFav[index] = !newFav[index];
@@ -387,7 +387,7 @@ const Home = () => {
                       >
                         {favorite[
                           products.findIndex(
-                            (product) => product._id === item._id
+                            (product) => product._id === item._id,
                           )
                         ] ? (
                           <FaHeart className="text-red-500" />
@@ -429,7 +429,7 @@ const Home = () => {
                         />
                       </Box>
 
-                      {/* Product Name */}
+                      {/* Category Name */}
                       <p className="mt-2 font-semibold text-left">
                         {item.name}
                       </p>

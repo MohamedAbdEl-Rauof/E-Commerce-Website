@@ -46,14 +46,14 @@ type CartItem = {
 };
 
 // Navigation items constant
-const NAV_ITEMS = ["Home", "Shop", "Product", "Contact Us"] as const;
+const NAV_ITEMS = ["Home", "Shop", "Category", "Contact Us"] as const;
 type NavItem = (typeof NAV_ITEMS)[number];
 
 // Route mapping
 const ROUTES: Record<NavItem, string> = {
   Home: "/",
   Shop: "/pages/Shop",
-  Product: "/pages/Product",
+  Category: "/pages/Category",
   "Contact Us": "/pages/ContactUs",
 };
 
@@ -134,8 +134,8 @@ const Header = () => {
   const increment = (productId: string) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
-      )
+        item.id === productId ? { ...item, quantity: item.quantity + 1 } : item,
+      ),
     );
 
     setChanges((prevChanges) => {
@@ -154,8 +154,8 @@ const Header = () => {
       prevItems.map((item) =>
         item.id === productId && item.quantity > 1
           ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
+          : item,
+      ),
     );
 
     setChanges((prevChanges) => {
@@ -174,8 +174,8 @@ const Header = () => {
       prevItems.map((item) =>
         item.id === productId
           ? { ...item, isFavourite: !item.isFavourite }
-          : item
-      )
+          : item,
+      ),
     );
 
     setChanges((prevChanges) => {
@@ -199,7 +199,7 @@ const Header = () => {
     try {
       // Remove the product from the cart state
       setCartItems((prevItems) =>
-        prevItems.filter((item) => item.id !== productId)
+        prevItems.filter((item) => item.id !== productId),
       );
 
       // Send DELETE request to remove the item from the database
@@ -218,7 +218,7 @@ const Header = () => {
         timer: 1000,
       });
       console.log(
-        "Item deleted from database and removed from cart successfully"
+        "Item deleted from database and removed from cart successfully",
       );
     } catch (error) {
       console.error("Error deleting product:", error);
