@@ -1,35 +1,68 @@
 "use client";
-import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { useProductContext } from "../../pages/context/ProductContext";
+import Header from "@/app/components/Header/page";
+import Footer from "@/app/components/Footer/page";
+
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  categoryId: string;
+  PriceBeforeDiscount?: number;
+}
 
 function ProductDetails() {
-  const { id } = useParams();
   const router = useRouter();
+  const { productId } = useProductContext();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // In a real app, you would fetch the product details using the ID
-  const product = {
-    _id: id,
-    name: "Premium Headphones",
-    description:
-      "High-quality wireless headphones with noise cancellation. Features include:\n\n- 40-hour battery life\n- Active noise cancellation\n- Premium sound quality\n- Comfortable fit\n- Bluetooth 5.0",
-    price: 299.99,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
-    specs: {
-      brand: "AudioPro",
-      model: "HP-2000",
-      color: "Black",
-      connectivity: "Wireless",
-      batteryLife: "40 hours",
-    },
-  };
+  useEffect(() => {
+    if (!productId) return;
+
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`/api/SpecificProduct?_id=${productId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch product");
+        }
+        const data = await response.json();
+        setProduct(data);
+      } catch (err) {
+        console.error("Error fetching product:", err);
+        setError("Failed to load product details.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [productId]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  if (!product) {
+    return <div>Product not found.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <Header />
       <div className="max-w-6xl mx-auto">
         <button
-          onClick={() => router(-1)}
+          onClick={() => router.push("/pages/Product")}
           className="flex items-center text-gray-600 hover:text-black mb-8"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
@@ -59,23 +92,16 @@ function ProductDetails() {
               <div className="prose prose-sm">
                 <h3 className="text-lg font-semibold">Description</h3>
                 <p className="whitespace-pre-line text-gray-600">
-                  {product.description}
+                  {product.description}{" "}
                 </p>
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Specifications</h3>
-                <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
-                  {Object.entries(product.specs).map(([key, value]) => (
-                    <div key={key} className="border-t border-gray-200 pt-4">
-                      <dt className="font-medium text-gray-500 capitalize">
-                        {key}
-                      </dt>
-                      <dd className="mt-1 text-gray-900">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
+              {product.PriceBeforeDiscount && (
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">Before Discount</h3>
+                  <p className="text-gray-600">{product.PriceBeforeDiscount}</p>
+                </div>
+              )}
 
               <button className="w-full bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900 transition-colors">
                 Add to Cart
@@ -84,6 +110,7 @@ function ProductDetails() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

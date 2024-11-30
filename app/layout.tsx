@@ -5,6 +5,7 @@ import { SelectedCategoryProvider } from "@/app/pages/SelectedCategoryForProduct
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { ProductProvider } from "@/app/pages/context/ProductContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -34,7 +35,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <CartProvider>
-            <SelectedCategoryProvider>{children}</SelectedCategoryProvider>
+            <SelectedCategoryProvider>
+              <ProductProvider>{children}</ProductProvider>
+            </SelectedCategoryProvider>
           </CartProvider>
         </AuthProvider>
       </body>

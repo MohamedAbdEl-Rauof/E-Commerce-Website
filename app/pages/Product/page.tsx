@@ -7,6 +7,7 @@ import Header from "@/app/components/Header/page";
 import Footer from "@/app/components/Footer/page";
 import { useRouter } from "next/navigation";
 import { Heart, Info } from "lucide-react";
+import { useProductContext } from "../../pages/context/ProductContext";
 
 interface Product {
   _id: string;
@@ -42,6 +43,7 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState("all");
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const router = useRouter();
+  const { productId, setProductId } = useProductContext();
 
   useEffect(() => {
     if (!categoryId) return;
@@ -92,6 +94,7 @@ const Products = () => {
   };
 
   const navigateToProduct = (productId: string) => {
+    setProductId(productId);
     router.push("/pages/ProductDetails");
   };
 
