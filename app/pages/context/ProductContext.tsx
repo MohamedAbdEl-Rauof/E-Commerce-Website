@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface ProductContextType {
   productId: string | null;
@@ -14,7 +14,21 @@ export const ProductProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [productId, setProductId] = useState<string | null>(null);
+  // Get the initial productId from localStorage, if available
+  const [productId, setProductIdState] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("productId");
+    }
+    return null;
+  });
+
+  // Update localStorage whenever the productId changes
+  const setProductId = (id: string) => {
+    setProductIdState(id);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("productId", id);
+    }
+  };
 
   return (
     <ProductContext.Provider value={{ productId, setProductId }}>

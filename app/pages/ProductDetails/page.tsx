@@ -5,6 +5,10 @@ import { ArrowLeft } from "lucide-react";
 import { useProductContext } from "../../pages/context/ProductContext";
 import Header from "@/app/components/Header/page";
 import Footer from "@/app/components/Footer/page";
+import Loading from "@/app/components/Loading/page";
+import Rating from "@mui/material/Rating";
+import Box from "@mui/material/Box";
+import CountDown from "@/app/components/Countdown/page";
 
 interface Product {
   _id: string;
@@ -46,7 +50,11 @@ function ProductDetails() {
   }, [productId]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loading />
+      </div>
+    );
   }
 
   if (error) {
@@ -80,28 +88,47 @@ function ProductDetails() {
             </div>
 
             <div className="space-y-6">
+              <div className="flex gap-3">
+                {/* Rating Section */}
+                <Box sx={{ "& > legend": { mt: 2 } }}>
+                  <Rating
+                    name="no-value"
+                    value={null}
+                    sx={{
+                      "& .MuiRating-iconFilled": {
+                        color: "black",
+                      },
+                    }}
+                  />
+                </Box>
+                <p className="font-bold">11 Review</p>
+              </div>
+
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
                   {product.name}
                 </h1>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
-                  ${product.price}
-                </p>
-              </div>
-
-              <div className="prose prose-sm">
-                <h3 className="text-lg font-semibold">Description</h3>
                 <p className="whitespace-pre-line text-gray-600">
                   {product.description}{" "}
                 </p>
               </div>
 
-              {product.PriceBeforeDiscount && (
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold">Before Discount</h3>
-                  <p className="text-gray-600">{product.PriceBeforeDiscount}</p>
-                </div>
-              )}
+              <div className="flex gap-5 ">
+                <p className="text-2xl font-bold text-gray-900 ">
+                  ${product.price}
+                </p>
+                <del className="text-2xl text-gray-600">
+                  {product.PriceBeforeDiscount}
+                </del>
+              </div>
+
+              <div>
+                <p className="text-2xl font-bold text-gray-900 ">
+                  {" "}
+                  offer Expiress in:
+                </p>
+                <CountDown />{" "}
+              </div>
 
               <button className="w-full bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900 transition-colors">
                 Add to Cart

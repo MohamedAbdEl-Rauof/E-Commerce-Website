@@ -25,6 +25,7 @@
     "@types/react-leaflet": "^2.8.3",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
+    "daisyui": "^4.12.14",
     "express": "^4.21.1",
     "flowbite": "^2.5.2",
     "flowbite-react": "^0.10.2",
