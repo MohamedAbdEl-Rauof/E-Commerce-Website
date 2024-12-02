@@ -1,4 +1,4 @@
-// components/Header / page.tsx
+// components /Header / page.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { CiSearch } from "react-icons/ci";
@@ -27,7 +27,7 @@ import Badge from "@mui/material/Badge";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import Link from "next/link";
 import { useCart } from "../../pages/CartContext/page"; // Context Api
-import { toast } from "react-toastify";
+import { TextField } from "@mui/material";
 
 interface Product {
   id: string;
@@ -46,14 +46,14 @@ type CartItem = {
 };
 
 // Navigation items constant
-const NAV_ITEMS = ["Home", "Shop", "Category", "Contact Us"] as const;
+const NAV_ITEMS = ["Home", "Shop", "Categories", "Contact Us"] as const;
 type NavItem = (typeof NAV_ITEMS)[number];
 
 // Route mapping
 const ROUTES: Record<NavItem, string> = {
   Home: "/",
   Shop: "/pages/Shop",
-  Category: "/pages/Category",
+  Categories: "/pages/Categories",
   "Contact Us": "/pages/ContactUs",
 };
 
@@ -66,6 +66,11 @@ const Header = () => {
   const { cartItems, setCartItems } = useCart();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const [changes, setChanges] = useState<Map<string, CartItem>>(new Map());
+  const [isInputVisible, setIsInputVisible] = useState(false);
+
+  const toggleInputVisibility = () => {
+    setIsInputVisible(!isInputVisible);
+  };
 
   // Access user ID directly from the session
   const userId = session?.user?.id;
@@ -392,6 +397,7 @@ const Header = () => {
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (session) {
       setAnchorEl(event.currentTarget);
@@ -463,22 +469,67 @@ const Header = () => {
       </List>
 
       <Box sx={{ position: "fixed", bottom: 20, width: 250 }}>
-        <Button
-          sx={{ width: "90%", mx: "5%" }}
-          variant="contained"
-          className="bg-black hover:bg-gray-800"
-          onClick={() => router.push("/Signin")}
-        >
-          Sign in
-        </Button>
+        {userId ? (
+          <>
+            <div className="flex items-center space-x-4 p-2 ">
+              <Button
+                sx={{
+                  width: "150px",
+                  height: "40px",
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  fontSize: "0.8rem",
+                }}
+                variant="contained"
+                className="bg-black hover:bg-gray-800"
+                onClick={() => router.push("/pages/UserAccount")}
+              >
+                My Account
+              </Button>
+
+              {/* Logout Button */}
+              <Button
+                sx={{
+                  width: "150px",
+                  height: "40px",
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  fontSize: "0.8rem",
+                }}
+                variant="contained"
+                className="bg-red-500 hover:bg-red-700"
+                onClick={() => {
+                  handleLogout()
+                }}
+              >
+                Logout
+              </Button>
+            </div>
+
+          </>
+        ) : (
+          // Sign In Button
+          <Button
+            sx={{ width: "90%", mx: "5%" }}
+            variant="contained"
+            className="bg-black hover:bg-gray-800"
+            onClick={() => router.push("/Signin")}
+          >
+            Sign in
+          </Button>
+        )}
       </Box>
-    </Box>
+    </Box >
   );
 
   return (
     <header className="flex flex-col md:flex-row justify-between items-center w-[90%] mx-auto mt-11 text-3xl">
       {/* Desktop Navigation */}
-      <h1 className="cursor-pointer hidden md:block">3𝓵𝓮𝓰𝓪𝓷𝓽</h1>
+      <Link href="/">
+        <h1 className="cursor-pointer hidden md:block">3𝓵𝓮𝓰𝓪𝓷𝓽</h1>
+      </Link>
 
       {/* Desktop Navigation */}
       <nav className="hidden md:flex">
@@ -505,7 +556,9 @@ const Header = () => {
           >
             <CiMenuBurger />
           </button>
-          <h1 className="cursor-pointer text-3xl">3𝓵𝓮𝓰𝓪𝓷𝓽</h1>
+          <Link href="/">
+            <h1 className="cursor-pointer hidden md:block">3𝓵𝓮𝓰𝓪𝓷𝓽</h1>
+          </Link>
         </div>
         <IoCartOutline className="cursor-pointer text-2xl hover:text-gray-800 transition-colors duration-200" />
       </div>
@@ -523,8 +576,28 @@ const Header = () => {
 
       {/* Desktop-only Icons */}
       <div className="hidden md:flex items-center space-x-7 mt-4">
-        <div>
-          <CiSearch className="cursor-pointer text-2xl hover:text-gray-800 transition-colors duration-200" />
+        {/* Search Icon Part*/}
+        <div className="relative flex items-center">
+          {/* Smooth Expanding Input */}
+          <div
+            className={`absolute top-0 right-10 transition-all duration-300 ${isInputVisible ? 'w-40 opacity-100' : 'w-0 opacity-0'
+              }`}
+            style={{ pointerEvents: isInputVisible ? 'auto' : 'none' }}
+          >
+            <TextField
+              id="outlined-basic"
+              label="Search"
+              variant="outlined"
+              size="small"
+              className="h-8"
+            />
+          </div>
+
+          {/* Search Icon */}
+          <CiSearch
+            className="cursor-pointer text-2xl hover:text-gray-800 transition-colors duration-200"
+            onClick={toggleInputVisibility}
+          />
         </div>
 
         <div>
@@ -574,7 +647,7 @@ const Header = () => {
           </Drawer>
         </div>
       </div>
-    </header>
+    </header >
   );
 };
 

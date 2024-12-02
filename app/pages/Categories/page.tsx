@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSelectedCategory } from "../.././pages/SelectedCategoryForProductContext/page";
+import { useSelectedCategory } from "../SelectedCategoryForProductContext/page";
 import Header from "../../components/Header/page";
 import Footer from "../../components/Footer/page";
 

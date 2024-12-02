@@ -9,6 +9,9 @@ import Loading from "@/app/components/Loading/page";
 import Rating from "@mui/material/Rating";
 import Box from "@mui/material/Box";
 import CountDown from "@/app/components/Countdown/page";
+import { FaHeart, FaRegHeart, FaArrowRight } from "react-icons/fa";
+import { Button, TextField } from "@mui/material";
+import Newsletter from "@/app/components/Newsletter/page";
 
 interface Product {
   _id: string;
@@ -129,11 +132,97 @@ function ProductDetails() {
                 </p>
                 <CountDown />{" "}
               </div>
+              <div>
+                <div className="flex gap-10">
+                  <div className="flex items-center border border-gray-300 rounded-md bg-white w-20">
+                    <button
+                      // onClick={() => decrement(item.id)}
+                      className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-l-md"
+                    >
+                      -
+                    </button>
+                    <span className="text-base font-medium text-gray-800">
+                      {/* {item.quantity} */} 1
+                    </span>
+                    <button
+                      // onClick={() => increment(item.id)}
+                      className="text-lg font-bold text-gray-700 px-3 py-1 hover:bg-gray-200 rounded-r-md"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="flex border-x-2">
+                    <FaHeart />
+                    <p> Wishlist </p>
+                  </div>
+                </div>
 
-              <button className="w-full bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900 transition-colors">
-                Add to Cart
-              </button>
+                <button className="w-full bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900 transition-colors">
+                  Add to Cart
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div>
+          <h1>Reviews</h1>
+        </div>
+        <div>
+          <div>
+            <h1>Customer Reviews</h1>
+            <div className="flex gap-3">
+              {/* Rating Section */}
+              <Box sx={{ "& > legend": { mt: 2 } }}>
+                <Rating
+                  name="no-value"
+                  value={null}
+                  sx={{
+                    "& .MuiRating-iconFilled": {
+                      color: "black",
+                    },
+                  }}
+                />
+              </Box>
+              <p className="font-bold">11 Review</p>
+            </div>
+
+          </div>
+          <div className="flex">
+            <TextField id="outlined-basic" label="Comment" variant="outlined" />
+            <Button variant="contained">Publish</Button>
+          </div>
+          <div>
+            <div>11 Reviews</div>
+            <div className="flex">
+              <div>
+                <img src="/images/Shop/Paste Image (1).jpg" alt="" width="10%" height="10%" />
+              </div>
+              <div className="">
+                  <h1>sofia harvetz</h1>
+                                {/* Rating Section */}
+              <Box sx={{ "& > legend": { mt: 2 } }}>
+                <Rating
+                  name="no-value"
+                  value={null}
+                  sx={{
+                    "& .MuiRating-iconFilled": {
+                      color: "black",
+                    },
+                  }}
+                />
+              </Box>
+              <p>I bought it 3 weeks ago and now come back just to say “Awesome Product”. I really enjoy it. At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupt et quas molestias excepturi sint non provident.</p>
+              <div className="flex gap-3">
+                <button>Like</button>
+                <button>Reply</button>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <Newsletter />
           </div>
         </div>
       </div>
