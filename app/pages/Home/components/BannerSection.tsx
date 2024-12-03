@@ -1,5 +1,6 @@
 import { FaArrowRight } from "react-icons/fa";
 import React from "react";
+import Link from "next/link";
 
 const BannerSection = () => {
   return (
@@ -28,7 +29,7 @@ const BannerSection = () => {
             stylish makeover
           </p>
           <u className="mt-7 flex justify-center md:justify-start items-center text-black font-bold cursor-pointer hover:underline">
-            <span>Show More</span>
+            <Link href="/pages/Categories">Show More</Link>
             <FaArrowRight className="ml-1 transform transition-transform duration-300 hover:translate-x-1" />
           </u>
         </div>

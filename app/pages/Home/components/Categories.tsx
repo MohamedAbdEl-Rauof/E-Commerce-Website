@@ -1,5 +1,6 @@
 import { FaArrowRight } from "react-icons/fa";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Category {
   id: string;
@@ -51,7 +52,8 @@ const Categories = () => {
           <div className="absolute bottom-0 left-0 p-4">
             <h1 className="text-lg font-bold text-white">{category.name}</h1>
             <u className="flex items-center mt-1 text-black font-bold cursor-pointer shad">
-              Show Now <FaArrowRight className="ml-1" />
+              <Link href="/pages/Shop">Shop Now</Link>
+              <FaArrowRight className="ml-1" />
             </u>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { FaArrowRight, FaHeart, FaRegHeart } from "react-icons/fa";
 import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
 import { toast } from "react-toastify";
+import Link from "next/link";
 
 interface Product {
   _id: string;
@@ -139,7 +140,7 @@ const NewArrivalsProduct = () => {
         </div>
         <div>
           <u className="flex items-center text-black font-bold cursor-pointer hover:underline">
-            More Products
+            <Link href="/pages/Categories"> More Products</Link>
             <FaArrowRight className="ml-1 transform transition-transform duration-300 hover:translate-x-1" />
           </u>
         </div>

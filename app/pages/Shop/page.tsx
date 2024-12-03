@@ -1,14 +1,27 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useState, useMemo } from "react";
 import Header from "../../components/Header/page";
 import Link from "next/link";
 import Image from "next/image";
 import { IoFilter } from "react-icons/io5";
-import { FaTh, FaThLarge, FaPause, FaEquals } from "react-icons/fa";
-import { FaHeart, FaRegHeart, FaArrowRight } from "react-icons/fa";
+import {
+  FaTh,
+  FaThLarge,
+  FaPause,
+  FaEquals,
+  FaHeart,
+  FaRegHeart,
+  FaSearch,
+} from "react-icons/fa";
 import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
+import Skeleton from "react-loading-skeleton";
+import { motion, AnimatePresence } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+import "react-loading-skeleton/dist/skeleton.css";
 
+// Types
 interface Category {
   _id: string;
   name: string;
@@ -21,11 +34,17 @@ interface Product {
   price: number;
   categoryId: string;
   PriceBeforeDiscount?: string;
+  rating?: number;
+  isNew?: boolean;
+  discount?: number;
 }
 
 interface FilterState {
   categoryId: string;
   priceRange: string;
+  sortBy: string;
+  view: "grid" | "large" | "split" | "list";
+  search: string;
 }
 
 interface PriceRange {
@@ -35,7 +54,8 @@ interface PriceRange {
   max: number | null;
 }
 
-const priceRanges: PriceRange[] = [
+// Constants
+const PRICE_RANGES: PriceRange[] = [
   { label: "All Price", range: "all", min: 0, max: null },
   { label: "$0.00 - $99.99", range: "0-99.99", min: 0, max: 99.99 },
   { label: "$100.00 - $199.99", range: "100-199.99", min: 100, max: 199.99 },
@@ -44,443 +64,457 @@ const priceRanges: PriceRange[] = [
   { label: "$400.00+", range: "400", min: 400, max: null },
 ];
 
-const Shop = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>("all");
-  const [loading, setLoading] = useState(false);
-  const [favorite, setFavorite] = useState(
-    new Array(products.length).fill(false),
-  );
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+const SORT_OPTIONS = [
+  { value: "featured", label: "Featured" },
+  { value: "price-asc", label: "Price: Low to High" },
+  { value: "price-desc", label: "Price: High to Low" },
+  { value: "name-asc", label: "Name: A to Z" },
+  { value: "name-desc", label: "Name: Z to A" },
+];
 
-  const initialFilterState: FilterState = {
+const VIEW_OPTIONS = [
+  { icon: FaTh, label: "Grid View", value: "grid" },
+  { icon: FaThLarge, label: "Large Grid View", value: "large" },
+  { icon: FaPause, label: "Split View", value: "split" },
+  { icon: FaEquals, label: "List View", value: "list" },
+] as const;
+
+// Animations
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: 20 },
+};
+
+const ProductCard = ({ product, isList, onFavorite, isFavorite }: any) => {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={fadeInUp}
+      transition={{ duration: 0.3 }}
+      className={`bg-white rounded-lg shadow-sm overflow-hidden group transform transition-all duration-300 hover:shadow-xl ${
+        isList ? "flex gap-6" : ""
+      }`}
+    >
+      <div className={`relative ${isList ? "w-1/3" : "w-full"}`}>
+        <div className="aspect-w-1 aspect-h-1 overflow-hidden">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="transition-transform duration-300 group-hover:scale-110"
+          />
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => onFavorite(product._id)}
+          className="absolute top-4 right-4 p-2 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300"
+        >
+          {isFavorite ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
+        </motion.button>
+        {product.isNew && (
+          <span className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded-full text-sm font-medium">
+            New
+          </span>
+        )}
+        {product.discount && (
+          <span className="absolute top-14 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+            -{product.discount}%
+          </span>
+        )}
+      </div>
+
+      <div className="p-4 flex-1">
+        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+          {product.name}
+        </h3>
+        <div className="mb-2">
+          <Rating
+            value={product.rating || 0}
+            readOnly
+            size="small"
+            sx={{ color: "black" }}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
+          {product.PriceBeforeDiscount && (
+            <span className="text-gray-400 line-through">
+              ${product.PriceBeforeDiscount}
+            </span>
+          )}
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="mt-4 w-full bg-black text-white py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
+        >
+          Add to Cart
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+};
+
+const Shop = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
     categoryId: "all",
     priceRange: "all",
-  };
+    sortBy: "featured",
+    view: "grid",
+    search: "",
+  });
 
-  const [filters, setFilters] = useState<FilterState>(initialFilterState);
-
-  // Fetch categories from API
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchInitialData = async () => {
+      setIsLoading(true);
       try {
-        const response = await fetch("/api/categories");
-        if (!response.ok)
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        const data = await response.json();
-        setCategories([{ _id: "all", name: "All Rooms" }, ...data]);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
+        const [categoriesRes, productsRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/products"),
+        ]);
 
-  // Fetch all products initially
-  useEffect(() => {
-    const fetchAllProducts = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch("/api/products");
-        if (!response.ok)
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        const data = await response.json();
-        setAllProducts(data);
-        setProducts(data);
-        setFavorite(new Array(data.length).fill(false));
+        const categoriesData = await categoriesRes.json();
+        const productsData = await productsRes.json();
+
+        setCategories([{ _id: "all", name: "All Rooms" }, ...categoriesData]);
+        setProducts(productsData);
       } catch (error) {
-        console.error("Error fetching all products:", error);
+        console.error("Error fetching initial data:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-    fetchAllProducts();
+
+    fetchInitialData();
   }, []);
 
-  // Apply filters client-side
-  const applyFilters = () => {
-    let filteredProducts = [...allProducts];
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+
+    // Apply search filter
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      result = result.filter((product) =>
+        product.name.toLowerCase().includes(searchTerm),
+      );
+    }
 
     // Apply category filter
     if (filters.categoryId !== "all") {
-      filteredProducts = filteredProducts.filter(
+      result = result.filter(
         (product) => product.categoryId === filters.categoryId,
       );
     }
 
     // Apply price filter
     if (filters.priceRange !== "all") {
-      const selectedRange = priceRanges.find(
-        (range) => range.range === filters.priceRange,
-      );
-      if (selectedRange) {
-        filteredProducts = filteredProducts.filter((product) => {
-          const price = product.price;
-          if (selectedRange.max === null) {
-            return price >= selectedRange.min;
-          }
-          return price >= selectedRange.min && price <= selectedRange.max;
+      const range = PRICE_RANGES.find((r) => r.range === filters.priceRange);
+      if (range) {
+        result = result.filter((product) => {
+          if (range.max === null) return product.price >= range.min;
+          return product.price >= range.min && product.price <= range.max;
         });
       }
     }
 
-    setProducts(filteredProducts);
+    // Apply sorting
+    switch (filters.sortBy) {
+      case "price-asc":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "name-asc":
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        result.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+    }
+
+    return result;
+  }, [products, filters]);
+
+  const toggleFavorite = (productId: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
   };
 
-  // Apply filters whenever filter state changes
-  useEffect(() => {
-    applyFilters();
-  }, [filters]);
-
-  const handleFilterChange = (filterType: keyof FilterState, value: string) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [filterType]: value,
-    }));
+  const handleFilterChange = (key: keyof FilterState, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const clearFilters = () => {
-    setFilters(initialFilterState);
-  };
-
-  // Fetch products when category is selected
-  useEffect(() => {
-    // In your Shop component's fetchProducts function:
-    const fetchProducts = async () => {
-      if (!selectedCategoryId) return;
-
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `/api/products?categoryId=${selectedCategoryId}`,
-        );
-        if (!response.ok) {
-          const errorData = await response.json();
-        }
-        const data = await response.json();
-        setProducts(data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        // Optionally show error to user via toast/alert
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [selectedCategoryId]);
-
-  // Array of sort icons and labels
-  const sortIcons = [
-    { icon: FaTh, label: "Grid View" },
-    { icon: FaThLarge, label: "Large Grid View" },
-    { icon: FaPause, label: "Split View" },
-    { icon: FaEquals, label: "List View" },
-  ];
-
-  const fetchFilteredProducts = async (newFilters: FilterState) => {
-    setLoading(true);
-    try {
-      const queryParams = new URLSearchParams();
-
-      if (newFilters.categoryId !== "all") {
-        queryParams.append("categoryId", newFilters.categoryId);
-      }
-
-      if (newFilters.priceRange !== "all") {
-        queryParams.append("priceRange", newFilters.priceRange);
-      }
-
-      const url = `/api/products${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setProducts(data);
-      setFavorite(new Array(data.length).fill(false));
-    } catch (error) {
-      console.error("Error fetching filtered products:", error);
-    } finally {
-      setLoading(false);
+  const getGridClasses = () => {
+    switch (filters.view) {
+      case "large":
+        return "grid-cols-1 lg:grid-cols-2 gap-8";
+      case "split":
+        return "grid-cols-1 lg:grid-cols-2 gap-6";
+      case "list":
+        return "grid-cols-1 gap-4";
+      default:
+        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
     }
   };
 
-  useEffect(() => {
-    fetchFilteredProducts(initialFilterState);
-  }, []);
-
-  const ActiveFilters = () => {
-    const activeFilters = [];
-
-    if (filters.categoryId !== "all") {
-      const category = categories.find((c) => c._id === filters.categoryId);
-      activeFilters.push({
-        type: "Category",
-        value: category?.name || "",
-        clear: () => handleFilterChange("categoryId", "all"),
-      });
-    }
-
-    if (filters.priceRange !== "all") {
-      const price = priceRanges.find((p) => p.range === filters.priceRange);
-      activeFilters.push({
-        type: "Price",
-        value: price?.label || "",
-        clear: () => handleFilterChange("priceRange", "all"),
-      });
-    }
-
-    if (activeFilters.length === 0) return null;
-
+  if (isLoading) {
     return (
-      <div className="mb-6">
-        <div className="flex items-center flex-wrap gap-2">
-          {activeFilters.map((filter, index) => (
-            <div
-              key={index}
-              className="flex items-center bg-gray-100 px-3 py-1 rounded-full"
-            >
-              <span className="text-sm font-medium">
-                {filter.type}: {filter.value}
-              </span>
-              <button
-                onClick={filter.clear}
-                className="ml-2 text-gray-500 hover:text-black"
-              >
-                ×
-              </button>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="w-[90%] mx-auto mt-14">
+          <Skeleton height={400} className="mb-8 rounded-xl" />
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1">
+              <Skeleton height={400} className="rounded-lg" />
             </div>
-          ))}
-          {activeFilters.length > 1 && (
-            <button
-              onClick={clearFilters}
-              className="text-sm text-gray-500 hover:text-black underline"
-            >
-              Clear all filters
-            </button>
-          )}
+            <div className="lg:col-span-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} height={300} className="rounded-lg" />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
-  };
+  }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="w-[90%] mx-auto">
-        {/* Banner Image */}
-        <div className="mt-14 relative">
+        {/* Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-14 relative h-[400px] rounded-xl overflow-hidden"
+        >
           <Image
             src="/images/Shop/Paste Image (1).jpg"
-            alt="Our Blog"
-            layout="responsive"
-            width={1000}
-            height={700}
-            className="w-full"
+            alt="Shop Banner"
+            layout="fill"
+            objectFit="cover"
+            priority
+            className="transform hover:scale-105 transition-transform duration-700"
           />
-          <div className="absolute inset-0 flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 bg-black bg-opacity-40">
-            <nav className="mt-6 md:mt-10 flex space-x-2 font-bold text-gray-400 text-sm sm:text-base md:text-lg lg:text-xl">
-              <Link href="/">Home</Link>
-              <span>{">"}</span>
-              <span className="text-gray-600">Shop</span>
-            </nav>
-            <h1 className="mt-4 text-2xl sm:text-xl md:text-2xl lg:text-5xl font-bold text-center text-white">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/20 flex flex-col items-center justify-center">
+            <motion.nav
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center space-x-2 text-white mb-4"
+            >
+              <Link href="/" className="hover:text-gray-200 transition">
+                Home
+              </Link>
+              <span>/</span>
+              <span className="text-gray-300">Shop</span>
+            </motion.nav>
+            <motion.h1
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-4xl md:text-5xl font-bold text-white mb-4 text-center"
+            >
               Shop Page
-            </h1>
-            <p className="mt-4 text-center text-xs sm:text-sm md:text-base lg:text-base text-gray-300 sm:mt-1 md:mt-1">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-gray-200 text-center max-w-2xl px-4"
+            >
               Let's design the place you always imagined.
-            </p>
+            </motion.p>
+          </div>
+        </motion.div>
+
+        {/* Search Bar */}
+        <div className="mt-8 mb-6">
+          <div className="relative max-w-xl mx-auto">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={filters.search}
+              onChange={(e) => handleFilterChange("search", e.target.value)}
+              className="w-full px-4 py-3 pl-12 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/20 transition-all"
+            />
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
         </div>
 
-        <ActiveFilters />
+        {/* Main Content */}
+        <div className="mt-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Mobile Filters Button */}
+          <button
+            onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
+            className="lg:hidden flex items-center justify-center space-x-2 w-full py-2 bg-black text-white rounded-lg"
+          >
+            <IoFilter />
+            <span>Filters</span>
+          </button>
 
-        {/* Filters and Products Section */}
-        <div className="mt-10 flex space-x-8">
-          {/* Filter Section */}
-          <div className="w-1/4">
-            <div className="flex items-center space-x-2 text-lg font-semibold mb-6">
-              <IoFilter />
-              <span>Filter</span>
-            </div>
-
-            {/* Category Filter */}
-            <div className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold">Category</h2>
-                {filters.categoryId !== "all" && (
-                  <button
-                    onClick={() => handleFilterChange("categoryId", "all")}
-                    className="text-sm text-gray-500 hover:text-black"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div>
-                {categories.map((cat) => (
-                  <div key={cat._id} className="mb-2">
-                    <label
-                      className={`cursor-pointer hover:text-black hover:underline ${
-                        filters.categoryId === cat._id
-                          ? "font-bold text-black"
-                          : "text-gray-600"
-                      }`}
-                      onClick={() => handleFilterChange("categoryId", cat._id)}
+          {/* Filters Sidebar */}
+          <AnimatePresence>
+            {(isMobileFiltersOpen || window.innerWidth >= 1024) && (
+              <motion.aside
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="lg:col-span-1 fixed lg:static inset-0 bg-white lg:bg-transparent z-50 lg:z-auto"
+              >
+                <div className="sticky top-4 bg-white p-6 rounded-lg shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-2">
+                      <IoFilter className="text-xl" />
+                      <h2 className="text-lg font-semibold">Filters</h2>
+                    </div>
+                    <button
+                      onClick={() => setIsMobileFiltersOpen(false)}
+                      className="lg:hidden text-gray-500"
                     >
-                      {cat.name}
-                    </label>
+                      ×
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Price Filter */}
-            <div className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold">Price</h2>
-                {filters.priceRange !== "all" && (
-                  <button
-                    onClick={() => handleFilterChange("priceRange", "all")}
-                    className="text-sm text-gray-500 hover:text-black"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              {priceRanges.map((price, index) => (
-                <div key={index} className="flex items-center mb-2">
-                  <input
-                    type="radio"
-                    id={price.range}
-                    name="price"
-                    className="mr-2"
-                    checked={filters.priceRange === price.range}
-                    onChange={() =>
-                      handleFilterChange("priceRange", price.range)
-                    }
-                  />
-                  <label
-                    htmlFor={price.range}
-                    className={`text-gray-700 cursor-pointer ${
-                      filters.priceRange === price.range ? "font-bold" : ""
-                    }`}
-                  >
-                    {price.label}
-                  </label>
+                  {/* Categories */}
+                  <div className="mb-8">
+                    <h3 className="font-semibold mb-4">Categories</h3>
+                    <div className="space-y-2">
+                      {categories.map((category) => (
+                        <motion.button
+                          key={category._id}
+                          whileHover={{ x: 4 }}
+                          onClick={() =>
+                            handleFilterChange("categoryId", category._id)
+                          }
+                          className={`block w-full text-left px-2 py-1.5 rounded transition ${
+                            filters.categoryId === category._id
+                              ? "bg-black text-white"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          {category.name}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Price Ranges */}
+                  <div className="mb-8">
+                    <h3 className="font-semibold mb-4">Price Range</h3>
+                    <div className="space-y-2">
+                      {PRICE_RANGES.map((range) => (
+                        <label
+                          key={range.range}
+                          className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition"
+                        >
+                          <input
+                            type="radio"
+                            name="price"
+                            checked={filters.priceRange === range.range}
+                            onChange={() =>
+                              handleFilterChange("priceRange", range.range)
+                            }
+                            className="form-radio text-black"
+                          />
+                          <span>{range.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </motion.aside>
+            )}
+          </AnimatePresence>
 
-          {/* Products Section */}
-          <div className="w-3/4">
-            {/* Sort Controls */}
-            <div className="flex justify-end items-center space-x-4 mb-6">
-              <h2 className="text-lg font-bold">Sort by ↓</h2>
-              <div className="flex space-x-2">
-                {sortIcons.map(({ icon: Icon, label }, index) => (
-                  <button
-                    key={index}
-                    aria-label={label}
-                    className="text-gray-500 text-2xl hover:text-gray-800 focus:outline-none"
+          {/* Products Grid */}
+          <div className="lg:col-span-3">
+            {/* Controls */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4"
+            >
+              <div className="flex items-center space-x-4">
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => handleFilterChange("sortBy", e.target.value)}
+                  className="form-select rounded border-gray-200 focus:ring-black/20"
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                {VIEW_OPTIONS.map(({ icon: Icon, label, value }) => (
+                  <motion.button
+                    key={value}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleFilterChange("view", value)}
+                    className={`p-2 rounded transition ${
+                      filters.view === value
+                        ? "bg-black text-white"
+                        : "text-gray-500 hover:bg-gray-100"
+                    }`}
+                    title={label}
                   >
                     <Icon />
-                  </button>
+                  </motion.button>
                 ))}
               </div>
+            </motion.div>
+
+            {/* Products */}
+            <div className={`grid ${getGridClasses()}`}>
+              <AnimatePresence>
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    isList={filters.view === "list"}
+                    onFavorite={toggleFavorite}
+                    isFavorite={favorites.has(product._id)}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
 
-            {/* Products Grid */}
-            {loading ? (
-              <div className="text-center py-10">Loading products...</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product, index) => (
-                  <div key={product._id} className="relative flex-shrink-0">
-                    <div className="group relative">
-                      {/* Category Image */}
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-52 object-cover rounded-md shadow-lg transition-transform duration-300 transform group-hover:scale-105"
-                      />
-
-                      {/* Favorite Icon */}
-                      <div
-                        onClick={() => {
-                          const newFavorites = [...favorite];
-                          newFavorites[index] = !newFavorites[index];
-                          setFavorite(newFavorites);
-                        }}
-                        className="absolute top-4 right-4 text-2xl text-gray-500 cursor-pointer opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                      >
-                        {favorite[index] ? (
-                          <FaHeart className="text-red-500" />
-                        ) : (
-                          <FaRegHeart />
-                        )}
-                      </div>
-
-                      {/* Add to Cart Button */}
-                      <button className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 font-semibold">
-                        Add to Cart
-                      </button>
-
-                      {/* Labels */}
-                      <div className="absolute top-2 left-2">
-                        <p className="text-black bg-white px-2 py-1 rounded-md text-sm font-semibold">
-                          New
-                        </p>
-                        <p className="text-white bg-green-500 px-2 mt-1 rounded-md text-sm font-semibold">
-                          -50%
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 mb-3">
-                      {/* Rating Section */}
-                      <Box sx={{ "& > legend": { mt: 2 } }}>
-                        <Rating
-                          name="no-value"
-                          value={null}
-                          sx={{
-                            "& .MuiRating-iconFilled": {
-                              color: "black",
-                            },
-                          }}
-                        />
-                      </Box>
-
-                      {/* Category Name */}
-                      <p className="mt-2 font-semibold text-left">
-                        {product.name}
-                      </p>
-
-                      {/* Price and Discount Section */}
-                      <div className="flex gap-3 mt-2 text-left">
-                        <p className="font-bold">${product.price}</p>
-                        {product.PriceBeforeDiscount && (
-                          <del className="text-gray-500">
-                            ${product.PriceBeforeDiscount}
-                          </del>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* No Products Message */}
-            {!loading && products.length === 0 && selectedCategoryId && (
-              <div className="text-center py-10 text-gray-500">
-                No products found for this category
-              </div>
+            {/* Empty State */}
+            {filteredProducts.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12 bg-white rounded-lg"
+              >
+                <p className="text-gray-500">
+                  No products found matching your criteria
+                </p>
+              </motion.div>
             )}
           </div>
         </div>

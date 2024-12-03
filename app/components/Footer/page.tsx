@@ -3,7 +3,6 @@ import { Footer as FlowbiteFooter } from "flowbite-react";
 import { BsFacebook, BsLinkedin, BsGithub } from "react-icons/bs";
 import Link from "next/link";
 
-
 const Footer = () => {
   return (
     <FlowbiteFooter container className="w-full p-0 ">
@@ -18,22 +17,30 @@ const Footer = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-white text-center sm:text-left">
             <Link href="/pages/Home" passHref>
-              <FlowbiteFooter.Title title="Home" className="text-white cursor-pointer sm:pt-8" />
+              <FlowbiteFooter.Title
+                title="Home"
+                className="text-white cursor-pointer sm:pt-8"
+              />
             </Link>
             <Link href="/pages/Shop" passHref>
-              <FlowbiteFooter.Title title="Shop" className="text-white cursor-pointer sm:pt-8" />
+              <FlowbiteFooter.Title
+                title="Shop"
+                className="text-white cursor-pointer sm:pt-8"
+              />
             </Link>
-            <Link href="/pages/Product" passHref>
-              <FlowbiteFooter.Title title="Product" className="text-white cursor-pointer sm:pt-8" />
-            </Link>
-            <Link href="/pages/Blog" passHref>
-              <FlowbiteFooter.Title title="Blog" className="text-white cursor-pointer sm:pt-8" />
+            <Link href="/pages/Categories" passHref>
+              <FlowbiteFooter.Title
+                title="Categories"
+                className="text-white cursor-pointer sm:pt-8"
+              />
             </Link>
             <Link href="/pages/ContactUs" passHref>
-              <FlowbiteFooter.Title title="Contact Us" className="text-white cursor-pointer sm:pt-8" />
+              <FlowbiteFooter.Title
+                title="Contact Us"
+                className="text-white cursor-pointer sm:pt-8"
+              />
             </Link>
           </div>
-
         </div>
 
         <hr className="my-4 border-gray-300 mt-16" />
