@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useSelectedCategory } from "../SelectedCategoryForProductContext/page";
 import Header from "../../components/Header/page";
 import Footer from "../../components/Footer/page";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import "react-loading-skeleton/dist/skeleton.css";
 
 interface Category {
   _id: string;
@@ -25,9 +29,9 @@ const Category = () => {
         const response = await fetch("/api/categories");
         const data = await response.json();
         setCategories(data);
-        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching categories:", error);
+      } finally {
         setIsLoading(false);
       }
     };
@@ -35,28 +39,76 @@ const Category = () => {
   }, []);
 
   const handleCategoryClick = (categoryId: string) => {
-    setCategoryId(categoryId); // Store category ID in context
+    setCategoryId(categoryId);
     router.push("/pages/Product");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <Header />
+      {/* Banner Section */}
+      <div className="w-[90%] mx-auto">
+        {isLoading ? (
+          <div className="h-[400px] rounded-xl bg-gray-200 animate-pulse mb-8"></div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-14 relative h-[400px] rounded-xl overflow-hidden"
+          >
+            <Image
+              src="/images/Categories/main image.jpg"
+              alt="Shop Banner"
+              layout="fill"
+              objectFit="cover"
+              priority
+              className="transform hover:scale-105 transition-transform duration-700"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/20 flex flex-col items-center justify-center">
+              <motion.nav
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center space-x-2 text-white mb-4"
+              >
+                <Link href="/" className="hover:text-gray-200 transition">
+                  Home
+                </Link>
+                <span>/</span>
+                <span className="text-gray-300">Categories</span>
+              </motion.nav>
+              <motion.h1
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-4xl md:text-5xl font-bold text-white mb-4 text-center"
+              >
+                Categories Page
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-gray-200 text-center max-w-2xl px-4"
+              >
+                Don&apos;t Waste Time, Shop Now
+              </motion.p>
+            </div>
+          </motion.div>
+        )}
+      </div>
 
+      {/* Main Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
           Explore Our Categories
         </h1>
-
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(categories.length || 4)].map((_, index) => (
+            {[...Array(4)].map((_, index) => (
               <div key={index} className="animate-pulse">
                 <div className="bg-gray-200 rounded-lg h-64"></div>
               </div>
             ))}
           </div>
-        ) : (
+        ) : categories.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {categories.map((category) => (
               <div
@@ -86,6 +138,8 @@ const Category = () => {
               </div>
             ))}
           </div>
+        ) : (
+          <p className="text-center text-gray-500">No categories found.</p>
         )}
       </main>
 

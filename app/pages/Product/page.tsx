@@ -8,6 +8,8 @@ import Footer from "@/app/components/Footer/page";
 import { useRouter } from "next/navigation";
 import { Heart, Info } from "lucide-react";
 import { useProductContext } from "../../pages/context/ProductContext";
+import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface Product {
   _id: string;
@@ -103,9 +105,9 @@ const Products = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
+    <div className="min-h-screen">
       <Header />
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl w-[90%] mx-auto mt-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
@@ -147,19 +149,21 @@ const Products = () => {
           {/* Product Grid */}
           <div className="lg:w-3/4">
             {isLoading ? (
-              <div className="text-center py-10">Loading products...</div>
+              <div className="h-[400px] rounded-xl bg-gray-200 animate-pulse mb-8"></div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
-                  <div key={product._id} className="relative group">
-                    <div className="relative bg-white rounded-lg shadow-md overflow-hidden">
-                      <img
+                  <motion.div key={product._id} className="relative group">
+                    <motion.div className="relative bg-white rounded-lg shadow-md overflow-hidden">
+                      <Image
                         src={product.image}
                         alt={product.name}
+                        width={600}
+                        height={400}
                         className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                      <div className="absolute top-4 right-4 space-x-2">
-                        <button
+                      <motion.div className="absolute top-4 right-4 space-x-2">
+                        <motion.button
                           onClick={() => toggleFavorite(product._id)}
                           className="p-2 rounded-full bg-white/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         >
@@ -170,37 +174,41 @@ const Products = () => {
                                 : "text-gray-600"
                             }`}
                           />
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
                           onClick={() => navigateToProduct(product._id)}
                           className="p-2 rounded-full bg-white/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         >
                           <Info className="w-5 h-5 text-gray-600" />
-                        </button>
-                      </div>
+                        </motion.button>
+                      </motion.div>
                       {product.PriceBeforeDiscount && (
-                        <span className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-md text-sm font-semibold">
+                        <motion.span className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-md text-sm font-semibold">
                           -50%
-                        </span>
+                        </motion.span>
                       )}
                       <button className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-semibold">
                         Add to Cart
                       </button>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <h3 className="font-semibold text-lg">{product.name}</h3>
-                      <div className="flex gap-3">
-                        <span className="font-bold">${product.price}</span>
+                    </motion.div>
+                    <motion.div className="mt-4 space-y-2">
+                      <motion.h3 className="font-semibold text-lg">
+                        {product.name}
+                      </motion.h3>
+                      <motion.div className="flex gap-3">
+                        <motion.span className="font-bold">
+                          ${product.price}
+                        </motion.span>
                         {product.PriceBeforeDiscount && (
-                          <del className="text-gray-500">
+                          <motion.del className="text-gray-500">
                             ${product.PriceBeforeDiscount}
-                          </del>
+                          </motion.del>
                         )}
-                      </div>
-                    </div>
-                  </div>
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
         </div>

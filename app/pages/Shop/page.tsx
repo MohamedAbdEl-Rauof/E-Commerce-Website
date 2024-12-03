@@ -14,12 +14,12 @@ import {
   FaRegHeart,
   FaSearch,
 } from "react-icons/fa";
-import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
 import Skeleton from "react-loading-skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import "react-loading-skeleton/dist/skeleton.css";
+import Footer from "@/app/components/Footer/page";
 
 // Types
 interface Category {
@@ -280,7 +280,7 @@ const Shop = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <Header />
         <div className="w-[90%] mx-auto mt-14">
           <Skeleton height={400} className="mb-8 rounded-xl" />
@@ -302,7 +302,7 @@ const Shop = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <Header />
       <div className="w-[90%] mx-auto">
         {/* Banner */}
@@ -518,6 +518,9 @@ const Shop = () => {
             )}
           </div>
         </div>
+      </div>
+      <div className="mt-16">
+        <Footer />
       </div>
     </div>
   );

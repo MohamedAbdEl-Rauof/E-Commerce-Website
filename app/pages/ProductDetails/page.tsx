@@ -69,7 +69,7 @@ function ProductDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       <Header />
       <div className="max-w-6xl mx-auto">
         <button
@@ -187,7 +187,6 @@ function ProductDetails() {
               </Box>
               <p className="font-bold">11 Review</p>
             </div>
-
           </div>
           <div className="flex">
             <TextField id="outlined-basic" label="Comment" variant="outlined" />
@@ -197,27 +196,38 @@ function ProductDetails() {
             <div>11 Reviews</div>
             <div className="flex">
               <div>
-                <img src="/images/Shop/Paste Image (1).jpg" alt="" width="10%" height="10%" />
+                <img
+                  src="/images/Shop/Paste Image (1).jpg"
+                  alt=""
+                  width="10%"
+                  height="10%"
+                />
               </div>
               <div className="">
-                  <h1>sofia harvetz</h1>
-                                {/* Rating Section */}
-              <Box sx={{ "& > legend": { mt: 2 } }}>
-                <Rating
-                  name="no-value"
-                  value={null}
-                  sx={{
-                    "& .MuiRating-iconFilled": {
-                      color: "black",
-                    },
-                  }}
-                />
-              </Box>
-              <p>I bought it 3 weeks ago and now come back just to say “Awesome Product”. I really enjoy it. At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupt et quas molestias excepturi sint non provident.</p>
-              <div className="flex gap-3">
-                <button>Like</button>
-                <button>Reply</button>
-              </div>
+                <h1>sofia harvetz</h1>
+                {/* Rating Section */}
+                <Box sx={{ "& > legend": { mt: 2 } }}>
+                  <Rating
+                    name="no-value"
+                    value={null}
+                    sx={{
+                      "& .MuiRating-iconFilled": {
+                        color: "black",
+                      },
+                    }}
+                  />
+                </Box>
+                <p>
+                  I bought it 3 weeks ago and now come back just to say “Awesome
+                  Product”. I really enjoy it. At vero eos et accusamus et iusto
+                  odio dignissimos ducimus qui blanditiis praesentium voluptatum
+                  deleniti atque corrupt et quas molestias excepturi sint non
+                  provident.
+                </p>
+                <div className="flex gap-3">
+                  <button>Like</button>
+                  <button>Reply</button>
+                </div>
               </div>
             </div>
           </div>
