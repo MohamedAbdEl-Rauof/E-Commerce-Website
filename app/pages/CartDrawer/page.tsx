@@ -1,11 +1,11 @@
 "use client";
-import React from 'react';
-import { Box, Typography, List, ListItem, Button } from '@mui/material';
-import { IoMdClose } from 'react-icons/io';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCart } from '../context/CartSideBar';
+import React from "react";
+import { Box, Typography, List, ListItem, Button } from "@mui/material";
+import { IoMdClose } from "react-icons/io";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCart } from "../context/CartSideBar";
 
 const CartDrawer = () => {
   const router = useRouter();
@@ -20,17 +20,17 @@ const CartDrawer = () => {
   } = useCart();
 
   const handleCheckout = () => {
-    router.push('/Signin');
+    router.push("/pages/ViewCart");
   };
 
   return (
     <Box
       sx={{
         width: {
-          xs: '100%',
-          sm: '350px',
+          xs: "100%",
+          sm: "350px",
         },
-        maxWidth: '350px'
+        maxWidth: "350px",
       }}
       role="presentation"
       className="flex flex-col h-full"
@@ -54,61 +54,73 @@ const CartDrawer = () => {
                 className="pl-4 pt-6 text-2xl"
                 key={item.id}
               >
-                <div className="relative flex items-center space-x-4 p-3 bg-gray-50 rounded-md shadow-md mx-2">
-                  <div>
+                <div className="relative flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 p-3 bg-gray-50 rounded-md shadow-md mx-2">
+                  {/* Image */}
+                  <div className="flex justify-center sm:justify-start">
                     <img
-                      src={item.image || "default_image_path"}
+                      src={item.image}
                       alt="img"
                       className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-md border border-gray-300"
                     />
                   </div>
+
+                  {/* Product Details */}
                   <div className="flex flex-col flex-1 space-y-1 sm:space-y-2">
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm sm:text-base font-semibold text-gray-800">
+                    <div className="flex justify-between items-start sm:items-center w-full">
+                      <p className="text-xs sm:text-sm md:text-base lg:text-lg font-semibold text-gray-800">
                         {item.name || "Product"}
                       </p>
-                      <div className="absolute top-2 right-0 p-2 text-right flex flex-col items-end">
-                        <p className="text-sm sm:text-base text-gray-800 font-semibold">
+
+                      {/* Price, Delete Icon, and Heart Icon */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0 pt-0 mt-0">
+                        {/* Price as Block */}
+                        <p className="text-xs sm:text-sm md:text-base lg:text-base text-gray-800 font-semibold block">
                           ${item.price || "0.00"}
                         </p>
+
+                        {/* Delete Icon as Block */}
                         <IoMdClose
                           onClick={() => deleteItem(item.id)}
-                          className="text-lg text-gray-600 cursor-pointer"
+                          className="text-lg text-gray-600 cursor-pointer block"
                         />
+
+                        {/* Heart Icon as Block */}
+                        <div className="flex flex-col items-center block">
+                          {item.isFavourite ? (
+                            <FaHeart
+                              className="text-red-500 cursor-pointer text-sm sm:text-base block"
+                              onClick={() => toggleFavorite(item.id)}
+                            />
+                          ) : (
+                            item.quantity > 0 && (
+                              <FaRegHeart
+                                className="text-gray-500 cursor-pointer text-sm sm:text-base block"
+                                onClick={() => toggleFavorite(item.id)}
+                              />
+                            )
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center border border-gray-300 rounded-md bg-white w-20">
+
+                    {/* Quantity Adjustment */}
+                    <div className="flex items-center border border-gray-300 rounded-md bg-white w-full sm:w-[42%]">
                       <button
                         onClick={() => decrementItem(item.id)}
-                        className="text-base sm:text-lg font-bold text-gray-700 px-2 sm:px-3 py-1 hover:bg-gray-200 rounded-l-md"
+                        className="w-12 h-10 text-lg font-bold text-gray-700 hover:bg-gray-200 focus:ring-gray-300 rounded-l-md flex justify-center items-center"
                       >
                         -
                       </button>
-                      <span className="text-sm sm:text-base font-medium text-gray-800 px-2">
+                      <p className="text-sm sm:text-base font-medium text-gray-800 flex-grow text-center">
                         {item.quantity}
-                      </span>
+                      </p>
                       <button
                         onClick={() => incrementItem(item.id)}
-                        className="text-base sm:text-lg font-bold text-gray-700 px-2 sm:px-3 py-1 hover:bg-gray-200 rounded-r-md"
+                        className="w-12 h-10 text-lg font-bold text-gray-700 hover:bg-gray-200 focus:ring-gray-300 rounded-r-md flex justify-center items-center"
                       >
                         +
                       </button>
                     </div>
-                  </div>
-                  <div className="absolute top-3 right-16 p-2 text-right flex flex-col items-end">
-                    {item.isFavourite ? (
-                      <FaHeart
-                        className="text-red-500 cursor-pointer text-sm sm:text-base"
-                        onClick={() => toggleFavorite(item.id)}
-                      />
-                    ) : (
-                      item.quantity > 0 && (
-                        <FaRegHeart
-                          className="text-gray-500 cursor-pointer text-sm sm:text-base"
-                          onClick={() => toggleFavorite(item.id)}
-                        />
-                      )
-                    )}
                   </div>
                 </div>
               </Typography>
@@ -127,7 +139,10 @@ const CartDrawer = () => {
         </div>
 
         <div className="p-2 sm:p-3 flex justify-between">
-          <Typography component="div" className="font-bold text-sm sm:text-base">
+          <Typography
+            component="div"
+            className="font-bold text-sm sm:text-base"
+          >
             Total
           </Typography>
           <Typography component="div" className="text-sm sm:text-base">
@@ -139,9 +154,9 @@ const CartDrawer = () => {
             width: "90%",
             mx: "5%",
             fontSize: {
-              xs: '0.875rem',
-              sm: '1rem'
-            }
+              xs: "0.875rem",
+              sm: "1rem",
+            },
           }}
           variant="contained"
           className="bg-black hover:bg-gray-800"

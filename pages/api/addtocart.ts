@@ -215,7 +215,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             },
           },
         );
-        return res.status(200).json({ message: "Category added to cart" });
+        return res.status(200).json({ message: "Product added to cart" });
       }
     } catch (error) {
       console.error("Error updating cart:", error);
