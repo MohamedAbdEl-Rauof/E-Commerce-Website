@@ -1,5 +1,5 @@
+// shop / page
 "use client";
-
 import React, { useEffect, useState, useMemo } from "react";
 import Header from "../../components/Header/page";
 import Link from "next/link";
@@ -280,31 +280,34 @@ const Shop = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen ">
-        <Header />
-        <div className="w-[90%] mx-auto mt-14">
-          <Skeleton height={400} className="mb-8 rounded-xl" />
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1">
-              <Skeleton height={400} className="rounded-lg" />
-            </div>
-            <div className="lg:col-span-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} height={300} className="rounded-lg" />
-                ))}
+        <div className="min-h-screen ">
+          <Header/>
+          <div className="w-[90%] mx-auto mt-14">
+            <Skeleton height={400} className="mb-8 rounded-xl"/>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              <div className="lg:col-span-1">
+                <Skeleton height={400} className="rounded-lg"/>
+              </div>
+              <div className="lg:col-span-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => (
+                      <Skeleton key={i} height={300} className="rounded-lg"/>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
+          <div className="mt-16">
+            <Footer/>
+          </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="min-h-screen ">
+      <div className="min-h-screen ">
       <Header />
-      <div className="w-[90%] mx-auto">
+      <div className="w-[90%] mx-auto ">
         {/* Banner */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
