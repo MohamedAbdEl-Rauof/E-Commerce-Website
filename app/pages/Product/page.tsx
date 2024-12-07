@@ -12,6 +12,7 @@ import {useProductContext} from "../../pages/context/ProductContext";
 // Types
 interface Product {
     id: string;
+    _id: string
     name: string;
     description: string;
     price: number;
