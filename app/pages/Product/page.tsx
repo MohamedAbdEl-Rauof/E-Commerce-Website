@@ -7,6 +7,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import Header from "@/app/components/Header/page";
 import Footer from "@/app/components/Footer/page";
 import {useRouter} from "next/navigation";
+import {useProductContext} from "../../pages/context/ProductContext";
 
 // Types
 interface Product {
@@ -92,165 +93,6 @@ const LoadingSkeleton: React.FC = () => {
     );
 };
 
-// Product Card Component
-const ProductCard: React.FC<{
-    product: Product;
-    isList: boolean;
-    onFavorite: (id: string) => void;
-    isFavorite: boolean;
-    onShowDetails: (id: string) => void;
-}> = ({product, isList, onFavorite, isFavorite, onShowDetails}) => {
-    return (
-        <motion.div
-            initial={{opacity: 0, y: 20}}
-            animate={{opacity: 1, y: 0}}
-            exit={{opacity: 0, y: 20}}
-            className={`bg-white rounded-lg shadow-sm overflow-hidden group ${
-                isList ? 'flex gap-6' : ''
-            }`}
-        >
-            <div className={`relative ${isList ? 'w-1/3' : 'w-full'}`}>
-                <div className="aspect-w-1 aspect-h-1 overflow-hidden">
-                    <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                </div>
-                <motion.div className="absolute top-4 right-4 space-x-2">
-                    <motion.button
-                        whileHover={{scale: 1.1}}
-                        whileTap={{scale: 0.9}}
-                        onClick={() => onFavorite(product.id)}
-                        className="p-2 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300"
-                    >
-                        <Heart className={isFavorite ? "text-red-500 fill-current" : ""}/>
-                    </motion.button>
-                    <motion.button
-                        whileHover={{scale: 1.1}}
-                        whileTap={{scale: 0.9}}
-                        onClick={() => onShowDetails(product.id)}
-                        className="p-2 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300"
-                    >
-                        <Info/>
-                    </motion.button>
-                </motion.div>
-                {product.isNew && (
-                    <span
-                        className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded-full text-sm font-medium">
-            New
-          </span>
-                )}
-                {product.discount && (
-                    <span
-                        className="absolute top-14 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-            -{product.discount}%
-          </span>
-                )}
-            </div>
-            <div className="p-4 flex-1">
-                <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
-                <div className="flex items-center gap-2">
-                    <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
-                    {product.priceBeforeDiscount && (
-                        <span className="text-gray-400 line-through">
-              ${product.priceBeforeDiscount}
-            </span>
-                    )}
-                </div>
-                <motion.button
-                    whileHover={{scale: 1.02}}
-                    whileTap={{scale: 0.98}}
-                    className="mt-4 w-full bg-black text-white py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
-                >
-                    Add to Cart
-                </motion.button>
-            </div>
-        </motion.div>
-    );
-};
-
-// Product Details Modal Component
-const ProductDetailsModal: React.FC<{
-    product: Product | null;
-    isOpen: boolean;
-    onClose: () => void;
-}> = ({product, isOpen, onClose}) => {
-    if (!product || !isOpen) return null;
-
-    return (
-        <motion.div
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
-            exit={{opacity: 0}}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-            onClick={onClose}
-        >
-            <motion.div
-                initial={{scale: 0.95, opacity: 0}}
-                animate={{scale: 1, opacity: 1}}
-                exit={{scale: 0.95, opacity: 0}}
-                className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="relative">
-                    <button
-                        onClick={onClose}
-                        className="absolute right-4 top-4 p-2 rounded-full bg-black/10 hover:bg-black/20 transition-colors"
-                    >
-                        <X className="w-5 h-5"/>
-                    </button>
-                    <img src={product.image} alt={product.name} className="w-full h-64 object-cover"/>
-                </div>
-                <div className="p-6">
-                    <h2 className="text-2xl font-bold mb-4">{product.name}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 className="font-semibold mb-2">Product Details</h3>
-                            <p className="text-gray-600 mb-4">{product.description}</p>
-                            <div className="space-y-2">
-                                <p><span className="font-medium">Category:</span> {product.category}</p>
-                                <p>
-                                    <span className="font-medium">Created:</span>{' '}
-                                    {new Date(product.createdAt || '').toLocaleDateString()}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Last Updated:</span>{' '}
-                                    {new Date(product.updatedAt || '').toLocaleDateString()}
-                                </p>
-                            </div>
-                        </div>
-                        <div>
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
-                                    {product.priceBeforeDiscount && (
-                                        <span className="text-gray-400 line-through text-lg">
-                      ${product.priceBeforeDiscount}
-                    </span>
-                                    )}
-                                </div>
-                                {product.discount && (
-                                    <div className="mb-4">
-                    <span className="bg-red-500 text-white px-2 py-1 rounded text-sm">
-                      Save {product.discount}%
-                    </span>
-                                    </div>
-                                )}
-                                <button
-                                    className="w-full bg-black text-white py-3 rounded-lg hover:bg-black/90 transition-colors">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-};
-
-// Main App Component
 function App() {
     const [filters, setFilters] = useState({
         priceRange: 'all',
@@ -258,14 +100,11 @@ function App() {
         search: '',
     });
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
-    const [productDetails, setProductDetails] = useState<ProductDetails>({
-        isOpen: false,
-        productId: null,
-    });
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [visibleProducts, setVisibleProducts] = useState(PRODUCTS_PER_PAGE);
     const router = useRouter();
+    const {setProductId} = useProductContext();
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -338,11 +177,13 @@ function App() {
         }
     };
 
-    const hasMore = visibleProducts < filteredProducts.length;
+    const onShowDetails = (productId: string) => {
+        setProductId(productId);
+        router.push(`/pages/ProductDetails`);
+    };
 
-    const selectedProduct = productDetails.productId
-        ? products.find(p => p.id === productDetails.productId)
-        : null;
+    const hasMore = visibleProducts < filteredProducts.length;
+    const visibleProductsList = filteredProducts.slice(0, visibleProducts);
 
     if (isLoading) {
         return <LoadingSkeleton/>;
@@ -418,25 +259,81 @@ function App() {
                             </div>
                         </div>
 
-                        {/* Products */}
-                        {filteredProducts.length > 0 ? (
+                        {/* Products Grid */}
+                        {visibleProductsList.length > 0 ? (
                             <div className="space-y-8">
-                                <div className={`grid ${getGridClasses()}`}>
-                                    <AnimatePresence>
-                                        {filteredProducts.slice(0, visibleProducts).map((product) => (
-                                            <ProductCard
-                                                key={product.id}
-                                                product={product}
-                                                isList={filters.view === 'list'}
-                                                onFavorite={toggleFavorite}
-                                                isFavorite={favorites.has(product.id)}
-                                                onShowDetails={(id) => {
-                                                    setProductDetails({isOpen: true, productId: id});
-                                                    router.push("/pages/ProductDetails");
-                                                }}
-                                            />
-                                        ))}
-                                    </AnimatePresence>
+                                <div className={`grid ${getGridClasses()} gap-6`}>
+                                    {visibleProductsList.map((product) => (
+                                        <motion.div
+                                            key={product.id}
+                                            initial={{opacity: 0, y: 20}}
+                                            animate={{opacity: 1, y: 0}}
+                                            exit={{opacity: 0, y: 20}}
+                                            className={`bg-white rounded-lg shadow-sm overflow-hidden group ${
+                                                filters.view === 'list' ? 'flex gap-6' : ''
+                                            }`}
+                                        >
+                                            <div className={`relative ${filters.view === 'list' ? 'w-1/3' : 'w-full'}`}>
+                                                <div className="aspect-w-1 aspect-h-1 overflow-hidden">
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                    />
+                                                </div>
+                                                <motion.div className="absolute top-4 right-4 space-x-2">
+                                                    <motion.button
+                                                        whileHover={{scale: 1.1}}
+                                                        whileTap={{scale: 0.9}}
+                                                        onClick={() => toggleFavorite(product.id)}
+                                                        className="p-2 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                                    >
+                                                        <Heart
+                                                            className={favorites.has(product.id) ? "text-red-500 fill-current" : ""}/>
+                                                    </motion.button>
+                                                    <motion.button
+                                                        whileHover={{scale: 1.1}}
+                                                        whileTap={{scale: 0.9}}
+                                                        onClick={() => onShowDetails(product._id)}
+                                                        className="p-2 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                                    >
+                                                        <Info/>
+                                                    </motion.button>
+                                                </motion.div>
+                                                {product.isNew && (
+                                                    <span
+                                                        className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded-full text-sm font-medium">
+                                                        New
+                                                    </span>
+                                                )}
+                                                {product.discount && (
+                                                    <span
+                                                        className="absolute top-14 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                                                        -{product.discount}%
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="p-4 flex-1">
+                                                <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <span
+                                                        className="font-bold text-lg">${product.price.toFixed(2)}</span>
+                                                    {product.priceBeforeDiscount && (
+                                                        <span className="text-gray-400 line-through">
+                                                            ${product.priceBeforeDiscount}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <motion.button
+                                                    whileHover={{scale: 1.02}}
+                                                    whileTap={{scale: 0.98}}
+                                                    className="mt-4 w-full bg-black text-white py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                                >
+                                                    Add to Cart
+                                                </motion.button>
+                                            </div>
+                                        </motion.div>
+                                    ))}
                                 </div>
 
                                 {hasMore && (
@@ -468,17 +365,6 @@ function App() {
                     </div>
                 </div>
             </div>
-
-            {/* Product Details Modal */}
-            <AnimatePresence>
-                {productDetails.isOpen && (
-                    <ProductDetailsModal
-                        product={selectedProduct}
-                        isOpen={productDetails.isOpen}
-                        onClose={() => setProductDetails({isOpen: false, productId: null})}
-                    />
-                )}
-            </AnimatePresence>
             <div className="mt-16">
                 <Footer/>
             </div>
