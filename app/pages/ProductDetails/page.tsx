@@ -13,7 +13,7 @@ import Footer from "@/app/components/Footer/page";
 import Newsletter from "@/app/components/Newsletter/page";
 import CountDown from "@/app/components/Countdown/page";
 import type {Product} from "@/types/Product";
-
+import Comment from "./component/comment"
 // Loading Skeleton Component
 const LoadingSkeleton = () => (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -256,57 +256,7 @@ function ProductDetails() {
                         </div>
 
                         {/* Reviews Section */}
-                        <div className="mt-16 bg-white rounded-lg shadow-lg p-8">
-                            <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
-
-                            <div className="flex items-center gap-4 mb-8">
-                                <Box sx={{"& > legend": {mt: 2}}}>
-                                    <Rating
-                                        name="overall-rating"
-                                        value={4}
-                                        sx={{
-                                            "& .MuiRating-iconFilled": {
-                                                color: "black",
-                                            },
-                                        }}
-                                    />
-                                </Box>
-                                <p className="font-bold">11 Reviews</p>
-                            </div>
-
-                            <div className="flex gap-4 mb-8">
-                                <TextField
-                                    fullWidth
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    label="Write your review"
-                                    variant="outlined"
-                                    multiline
-                                    rows={3}
-                                />
-                                <Button
-                                    variant="contained"
-                                    onClick={handleSubmitReview}
-                                    sx={{
-                                        bgcolor: 'black',
-                                        '&:hover': {
-                                            bgcolor: 'rgba(0, 0, 0, 0.8)',
-                                        },
-                                    }}
-                                >
-                                    Publish
-                                </Button>
-                            </div>
-
-                            <div className="space-y-6">
-                                <h3 className="text-xl font-semibold mb-4">Recent Reviews</h3>
-                                <ProductReview
-                                    name="Sofia Harvetz"
-                                    image="/images/Shop/Paste Image (1).jpg"
-                                    review="I bought it 3 weeks ago and now come back just to say 'Awesome Product'. I really enjoy it. At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupt et quas molestias excepturi sint non provident."
-                                />
-                            </div>
-                        </div>
+                        <Comment/>
 
                     </motion.main>
                 )}
