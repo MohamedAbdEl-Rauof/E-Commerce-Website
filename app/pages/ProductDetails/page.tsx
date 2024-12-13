@@ -2,8 +2,8 @@
 import React, {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
 import {ArrowLeft} from "lucide-react";
-import {motion, AnimatePresence} from "framer-motion";
-import {Rating, Box, TextField, Button} from "@mui/material";
+import {AnimatePresence, motion} from "framer-motion";
+import {Box, Rating} from "@mui/material";
 import {FaHeart} from "react-icons/fa";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -12,8 +12,10 @@ import Header from "@/app/components/Header/page";
 import Footer from "@/app/components/Footer/page";
 import Newsletter from "@/app/components/Newsletter/page";
 import CountDown from "@/app/components/Countdown/page";
-import type {Product} from "@/types/Product";
 import Comment from "./component/comment"
+import {useCart} from "../context/CartSideBar";
+
+
 // Loading Skeleton Component
 const LoadingSkeleton = () => (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -59,35 +61,6 @@ const ErrorState = ({message}: { message: string }) => (
     </div>
 );
 
-// Product Review Component
-const ProductReview = ({name, image, review}: { name: string; image: string; review: string }) => (
-    <div className="flex gap-4 p-4 border-b">
-        <div className="flex-shrink-0">
-            <img src={image} alt={name} className="w-12 h-12 rounded-full object-cover"/>
-        </div>
-        <div className="flex-grow">
-            <h3 className="font-semibold text-lg">{name}</h3>
-            <Box sx={{"& > legend": {mt: 2}}}>
-                <Rating
-                    name="read-only"
-                    value={5}
-                    readOnly
-                    sx={{
-                        "& .MuiRating-iconFilled": {
-                            color: "black",
-                        },
-                    }}
-                />
-            </Box>
-            <p className="text-gray-600 mt-2">{review}</p>
-            <div className="flex gap-4 mt-3">
-                <button className="text-gray-600 hover:text-black transition-colors">Like</button>
-                <button className="text-gray-600 hover:text-black transition-colors">Reply</button>
-            </div>
-        </div>
-    </div>
-);
-
 function ProductDetails() {
     const router = useRouter();
     const {productId} = useProductContext();
@@ -96,6 +69,17 @@ function ProductDetails() {
     const [error, setError] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(1);
     const [comment, setComment] = useState("");
+    const {
+        cartItems,
+        closeCart,
+        incrementItem,
+        decrementItem,
+        deleteItem,
+        toggleFavorite,
+        calculateSubtotal,
+    } = useCart();
+
+    const cartItem = cartItems.find((item) => item.id === productId);
 
     useEffect(() => {
         if (!productId) {
@@ -125,16 +109,29 @@ function ProductDetails() {
         setQuantity((prev) => Math.max(1, prev + delta));
     };
 
-    const handleAddToCart = () => {
-        // Implement cart functionality
-        console.log(`Adding ${quantity} of ${product?.name} to cart`);
+    const handleIncrement = () => {
+        if (cartItem) {
+            incrementItem(cartItem.id); // Increment the specific product in cart
+        }
     };
 
-    const handleSubmitReview = () => {
-        // Implement review submission
-        console.log("Submitting review:", comment);
-        setComment("");
+    const handleDecrement = () => {
+        if (cartItem) {
+            decrementItem(cartItem.id); // Decrement the specific product in cart
+        }
     };
+
+    if (isLoading) {
+        return <LoadingSkeleton/>;
+    }
+
+    if (error) {
+        return <ErrorState message={error}/>;
+    }
+
+    if (!product) {
+        return <ErrorState message="Product not found"/>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -164,7 +161,6 @@ function ProductDetails() {
                             <ArrowLeft className="w-5 h-5 mr-2"/>
                             Back to Products
                         </motion.button>
-
                         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
                                 {/* Product Gallery */}
@@ -174,8 +170,8 @@ function ProductDetails() {
                                     className="space-y-4"
                                 >
                                     <img
-                                        src={product.image}
-                                        alt={product.name}
+                                        src={product.image}  // Changed from `product.image` to `item.image`
+                                        alt={product.name}  // Changed from `product.name` to `item.name`
                                         className="w-full h-96 object-cover rounded-lg shadow-lg"
                                     />
                                 </motion.div>
@@ -205,7 +201,8 @@ function ProductDetails() {
                                     <div className="flex gap-5 items-center">
                                         <p className="text-2xl font-bold text-gray-900">${product.price}</p>
                                         {product.PriceBeforeDiscount && (
-                                            <del className="text-2xl text-gray-600">${product.PriceBeforeDiscount}</del>
+                                            <del
+                                                className="text-2xl text-gray-600">${product.PriceBeforeDiscount}</del>
                                         )}
                                     </div>
 
@@ -219,14 +216,15 @@ function ProductDetails() {
                                             <div
                                                 className="flex items-center border border-gray-300 rounded-md bg-white">
                                                 <button
-                                                    onClick={() => handleQuantityChange(-1)}
+                                                    onClick={handleDecrement}
                                                     className="px-4 py-2 hover:bg-gray-100 transition-colors"
                                                 >
                                                     -
                                                 </button>
-                                                <span className="px-4 py-2 border-x">{quantity}</span>
+                                                <span
+                                                    className="px-4 py-2 border-x">{cartItem?.quantity || quantity}</span>
                                                 <button
-                                                    onClick={() => handleQuantityChange(1)}
+                                                    onClick={handleIncrement}
                                                     className="px-4 py-2 hover:bg-gray-100 transition-colors"
                                                 >
                                                     +
@@ -235,7 +233,8 @@ function ProductDetails() {
                                             <motion.button
                                                 whileHover={{scale: 1.05}}
                                                 whileTap={{scale: 0.95}}
-                                                className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
+                                                className={`ml-4 ${cartItem?.isFavourite ? "text-red-500" : "text-gray-500"}`}
+                                                onClick={() => toggleFavorite(productId)}
                                             >
                                                 <FaHeart/>
                                                 <span>Wishlist</span>
@@ -245,7 +244,6 @@ function ProductDetails() {
                                         <motion.button
                                             whileHover={{scale: 1.02}}
                                             whileTap={{scale: 0.98}}
-                                            onClick={handleAddToCart}
                                             className="w-full bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900 transition-colors"
                                         >
                                             Add to Cart

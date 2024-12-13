@@ -1,13 +1,18 @@
 "use client";
-import React, {useState, useMemo, useEffect} from 'react';
-import {Heart, Info, Search, Grid, LayoutGrid, PauseCircle, Equal, X} from 'lucide-react';
-import {motion, AnimatePresence} from 'framer-motion';
+import React, {useEffect, useMemo, useState} from 'react';
+import {Equal, Grid, Info, LayoutGrid, PauseCircle, Search} from 'lucide-react';
+import {motion} from 'framer-motion';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import Header from "@/app/components/Header/page";
 import Footer from "@/app/components/Footer/page";
 import {useRouter} from "next/navigation";
 import {useProductContext} from "../../pages/context/ProductContext";
+import {addToCart} from "@/app/utils/addToCartButtonFunc";
+import {useSession} from "next-auth/react";
+import Swal from "sweetalert2";
+import {FaHeart, FaRegHeart} from "react-icons/fa";
+
 
 // Types
 interface Product {
@@ -106,6 +111,9 @@ function App() {
     const [visibleProducts, setVisibleProducts] = useState(PRODUCTS_PER_PAGE);
     const router = useRouter();
     const {setProductId} = useProductContext();
+    const {data: session} = useSession();
+    const [favorite, setFavorite] = useState<Record<string, boolean>>({}); // Use an object to track favorites by productId
+
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -116,6 +124,7 @@ function App() {
                 }
                 const data = await response.json();
                 setProducts(data);
+                console.log("produuuuuuuuuuuuuct ya raouf", data)
             } catch (error) {
                 console.error('Error fetching products:', error);
             } finally {
@@ -149,17 +158,6 @@ function App() {
         return result;
     }, [filters, products]);
 
-    const toggleFavorite = (productId: string) => {
-        setFavorites((prev) => {
-            const next = new Set(prev);
-            if (next.has(productId)) {
-                next.delete(productId);
-            } else {
-                next.add(productId);
-            }
-            return next;
-        });
-    };
 
     const loadMore = () => {
         setVisibleProducts((prev) => prev + PRODUCTS_PER_PAGE);
@@ -189,6 +187,35 @@ function App() {
     if (isLoading) {
         return <LoadingSkeleton/>;
     }
+
+
+    // Handle add to cart click
+    const handleAddToCart = (productId: string, quantity: number, isFavourite: boolean) => {
+        if (session && session.user) {
+            const userId = session.user.id;
+            addToCart({userId, productId, quantity, isFavourite, router});
+        } else {
+            Swal.fire({
+                title: "Please Log In",
+                text: "You need to be logged in to add to the cart.",
+                icon: "warning",
+                confirmButtonText: "Go to Login",
+            }).then(() => {
+                router.push("/Signin");
+            });
+        }
+    };
+
+    // Toggle favorite status and add to cart
+    const handleFavoriteAndCart = (productId: string) => {
+        const newFav = {...favorite};
+        newFav[productId] = !newFav[productId]; // Toggle favorite status using productId
+        setFavorite(newFav);
+
+        const isFavourite = newFav[productId];
+        handleAddToCart(productId, 0, isFavourite); // Add to cart with favorite status
+    };
+
 
     return (
         <div className="min-h-screen">
@@ -286,11 +313,15 @@ function App() {
                                                     <motion.button
                                                         whileHover={{scale: 1.1}}
                                                         whileTap={{scale: 0.9}}
-                                                        onClick={() => toggleFavorite(product.id)}
+                                                        onClick={() => handleFavoriteAndCart(product._id)}
                                                         className="p-2 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300"
                                                     >
-                                                        <Heart
-                                                            className={favorites.has(product.id) ? "text-red-500 fill-current" : ""}/>
+                                                        {/* Display the heart icon based on favorite status */}
+                                                        {favorite[product._id] ? (
+                                                            <FaHeart className="text-red-500"/>
+                                                        ) : (
+                                                            <FaRegHeart/>
+                                                        )}
                                                     </motion.button>
                                                     <motion.button
                                                         whileHover={{scale: 1.1}}
@@ -329,6 +360,8 @@ function App() {
                                                     whileHover={{scale: 1.02}}
                                                     whileTap={{scale: 0.98}}
                                                     className="mt-4 w-full bg-black text-white py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                                    onClick={() => handleAddToCart(product._id, 1, false)}
+
                                                 >
                                                     Add to Cart
                                                 </motion.button>
