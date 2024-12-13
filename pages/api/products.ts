@@ -9,10 +9,24 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   // Handle POST request to create a new product
   if (req.method === "POST") {
     try {
-      const { name, description, price, image, categoryId, PriceBeforeDiscount } = req.body;
+      const {
+        name,
+        description,
+        price,
+        image,
+        categoryId,
+        PriceBeforeDiscount,
+      } = req.body;
 
       // Check if required fields are provided
-      if (!name || !description || !price || !image || !categoryId || !PriceBeforeDiscount) {
+      if (
+        !name ||
+        !description ||
+        !price ||
+        !image ||
+        !categoryId ||
+        !PriceBeforeDiscount
+      ) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
@@ -24,12 +38,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         image,
         categoryId,
         createdAt: new Date(),
-        PriceBeforeDiscount
+        PriceBeforeDiscount,
       };
 
       const result = await db.collection("products").insertOne(newProduct);
 
-      res.status(201).json({ message: "Product created", product: { id: result.insertedId, ...newProduct } });
+      res
+        .status(201)
+        .json({
+          message: "Category created",
+          product: { id: result.insertedId, ...newProduct },
+        });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Error creating product" });
@@ -44,12 +63,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       const filter: any = {};
 
       // If categoryId is provided, add to filter
-      if (categoryId && typeof categoryId === 'string') {
+      if (categoryId && typeof categoryId === "string") {
         filter.categoryId = new ObjectId(categoryId);
       }
 
       // If priceRange is provided, parse and add to filter
-      if (priceRange && typeof priceRange === 'string' && priceRange !== "all") {
+      if (
+        priceRange &&
+        typeof priceRange === "string" &&
+        priceRange !== "all"
+      ) {
         const [min, max] = priceRange.split("-");
 
         // Add the price filter based on the range
