@@ -1,4 +1,4 @@
-// contexts/CartContext.tsx
+// pages/CartContext/page.tsx
 "use client";
 import React, {createContext, ReactNode, useContext, useState} from "react";
 

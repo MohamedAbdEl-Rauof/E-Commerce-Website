@@ -1,13 +1,14 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import React, {createContext, useContext, useEffect, useState} from 'react';
+import {useSession} from 'next-auth/react';
 import Swal from 'sweetalert2';
-import { CartItem } from '../../types/cart';
+import {CartItem} from '../../types/cart';
 
 interface CartContextType {
     cartItems: CartItem[];
     isOpen: boolean;
     openCart: () => void;
+    setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>; // Add this line
     closeCart: () => void;
     incrementItem: (productId: string) => void;
     decrementItem: (productId: string) => void;
@@ -18,11 +19,11 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({children}) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [changes, setChanges] = useState(new Map());
-    const { data: session } = useSession();
+    const {data: session} = useSession();
     const userId = session?.user?.id;
 
     useEffect(() => {
@@ -59,8 +60,8 @@ export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children 
                 if (item.quantity === 0 && !item.isFavourite) {
                     await fetch('/api/addtocart', {
                         method: 'DELETE',
-                        body: JSON.stringify({ userId, productId: item.id }),
-                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({userId, productId: item.id}),
+                        headers: {'Content-Type': 'application/json'},
                     });
                 } else {
                     await fetch('/api/addtocart', {
@@ -71,7 +72,7 @@ export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children 
                             quantity: item.quantity,
                             isFavourite: item.isFavourite,
                         }),
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {'Content-Type': 'application/json'},
                     });
                 }
             }
@@ -95,7 +96,7 @@ export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children 
     const incrementItem = (productId: string) => {
         setCartItems((prevItems) =>
             prevItems.map((item) =>
-                item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
+                item.id === productId ? {...item, quantity: item.quantity + 1} : item
             )
         );
         updateChanges(productId, 1);
@@ -105,7 +106,7 @@ export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children 
         setCartItems((prevItems) =>
             prevItems.map((item) =>
                 item.id === productId && item.quantity > 1
-                    ? { ...item, quantity: item.quantity - 1 }
+                    ? {...item, quantity: item.quantity - 1}
                     : item
             )
         );
@@ -135,8 +136,8 @@ export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children 
             if (userId) {
                 await fetch('/api/addtocart', {
                     method: 'DELETE',
-                    body: JSON.stringify({ userId, productId }),
-                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({userId, productId}),
+                    headers: {'Content-Type': 'application/json'},
                 });
 
                 Swal.fire({
@@ -156,7 +157,7 @@ export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children 
         setCartItems((prevItems) =>
             prevItems.map((item) =>
                 item.id === productId
-                    ? { ...item, isFavourite: !item.isFavourite }
+                    ? {...item, isFavourite: !item.isFavourite}
                     : item
             )
         );
@@ -168,7 +169,7 @@ export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children 
             const newChanges = new Map(prevChanges);
             const item = cartItems.find((item) => item.id === productId);
             if (item) {
-                const updatedItem = { ...item, isFavourite: !item.isFavourite };
+                const updatedItem = {...item, isFavourite: !item.isFavourite};
                 newChanges.set(productId, updatedItem);
                 if (updatedItem.quantity === 0 && !updatedItem.isFavourite) {
                     deleteItem(productId);
@@ -188,6 +189,7 @@ export const CartSideBar: React.FC<{ children: React.ReactNode }> = ({ children 
             value={{
                 cartItems,
                 isOpen,
+                setCartItems,
                 openCart,
                 closeCart,
                 incrementItem,

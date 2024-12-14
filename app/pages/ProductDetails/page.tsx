@@ -15,6 +15,16 @@ import CountDown from "@/app/components/Countdown/page";
 import Comment from "./component/comment"
 import {useCart} from "../context/CartSideBar";
 
+type Product = {
+    id: string;
+    name: string;
+    description: string;
+    image: string;
+    price: number;
+    PriceBeforeDiscount?: number;
+    [key: string]: any;
+};
+
 
 // Loading Skeleton Component
 const LoadingSkeleton = () => (
@@ -234,7 +244,9 @@ function ProductDetails() {
                                                 whileHover={{scale: 1.05}}
                                                 whileTap={{scale: 0.95}}
                                                 className={`ml-4 ${cartItem?.isFavourite ? "text-red-500" : "text-gray-500"}`}
-                                                onClick={() => toggleFavorite(productId)}
+                                                onClick={() => {
+                                                    if (productId) toggleFavorite(productId);
+                                                }}
                                             >
                                                 <FaHeart/>
                                                 <span>Wishlist</span>
