@@ -81,4 +81,6 @@ password : HIHICaptain@gmail.com
 > contact us - bad loading - handle the emailjs template , handle the responsive
 > loading until the data is come from the database
 > My Account - [style of page , store the image in database , form vaildation in feild,show comment and interacte] ,
-> > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > handle the responsive
+> npm run build
+> seprate the code , not repeat your self
+> make the dark and light mooooooode 
