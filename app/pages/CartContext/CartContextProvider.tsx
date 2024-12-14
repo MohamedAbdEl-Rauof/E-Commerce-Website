@@ -1,9 +1,6 @@
-<<<<<<< Updated upstream:app/pages/CartContext/page.tsx
 // pages/CartContext/page.tsx
-=======
->>>>>>> Stashed changes:app/pages/CartContext/CartContextProvider.tsx
 "use client";
-import React, {createContext, useContext, useState, ReactNode} from "react";
+import React, {createContext, ReactNode, useContext, useState} from "react";
 
 interface Product {
     id: string;
